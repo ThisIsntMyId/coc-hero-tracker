@@ -4695,11 +4695,95 @@
             );
         }
 
+        // Sync Modal Component
+        function SyncModal({ isOpen, onClose, playerJsonInput, setPlayerJsonInput, onSync, syncError }) {
+            const { useEffect } = React;
+
+            // Handle escape key to close modal
+            useEffect(() => {
+                if (!isOpen) return;
+
+                const handleEscape = (e) => {
+                    if (e.key === 'Escape') {
+                        onClose();
+                    }
+                };
+
+                document.addEventListener('keydown', handleEscape);
+                return () => document.removeEventListener('keydown', handleEscape);
+            }, [isOpen, onClose]);
+
+            if (!isOpen) return null;
+
+            return (
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={onClose}
+                >
+                    <div 
+                        className="bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-2xl font-bold text-white">Sync Player Data</h2>
+                                <button 
+                                    onClick={onClose}
+                                    className="text-gray-400 hover:text-white transition-colors"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <p className="text-gray-300 mb-4">
+                                Paste your player JSON data below to automatically sync hero levels:
+                            </p>
+                            
+                            <textarea
+                                className="w-full h-64 bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-4 font-mono"
+                                placeholder='{"tag":"#ABCD1234","heroes":[{"data":"28000000","lvl":50}...],...}'
+                                value={playerJsonInput}
+                                onChange={(e) => setPlayerJsonInput(e.target.value)}
+                            />
+                            
+                            {syncError && (
+                                <div className="mt-4 p-3 bg-red-900 border border-red-700 rounded-lg text-red-200">
+                                    {syncError}
+                                </div>
+                            )}
+                            
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={onClose}
+                                    className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={onSync}
+                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors font-medium"
+                                >
+                                    Sync
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         // --- MAIN APP COMPONENT ---
         function App() {
             const { useState, useMemo, useEffect } = React;
 
             // --- STATE ---
+            // Modal state for syncing player data
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [playerJsonInput, setPlayerJsonInput] = useState('');
+            const [syncError, setSyncError] = useState('');
+
             // 1. Initialize and clean the hero data
             const [heroes, setHeroes] = useState(() => {
                 // Try to load from localStorage first
@@ -4809,6 +4893,59 @@
                         [levelType]: value
                     }
                 }));
+            };
+
+            // Hero ID mapping from player JSON to app hero IDs
+            const HERO_ID_MAP = {
+                "28000000": "king",     // Barbarian King
+                "28000001": "queen",    // Archer Queen
+                "28000002": "warden",   // Grand Warden
+                "28000004": "champion", // Royal Champion
+                "28000006": "prince"    // Minion Prince
+            };
+
+            const handleSyncPlayerData = () => {
+                setSyncError('');
+                
+                try {
+                    // Parse the JSON
+                    const playerData = JSON.parse(playerJsonInput);
+                    
+                    // Extract hero levels from the JSON
+                    if (!playerData.heroes || !Array.isArray(playerData.heroes)) {
+                        setSyncError('Invalid JSON: "heroes" field not found or not an array');
+                        return;
+                    }
+
+                    // Create updates for each hero
+                    const updates = {};
+                    playerData.heroes.forEach(hero => {
+                        const heroId = HERO_ID_MAP[hero.data];
+                        if (heroId && heroes[heroId]) {
+                            updates[heroId] = hero.lvl;
+                        }
+                    });
+
+                    // Update all hero levels at once
+                    setHeroes(prevHeroes => {
+                        const updatedHeroes = { ...prevHeroes };
+                        for (const heroId in updates) {
+                            updatedHeroes[heroId] = {
+                                ...updatedHeroes[heroId],
+                                currentLevel: updates[heroId]
+                            };
+                        }
+                        return updatedHeroes;
+                    });
+
+                    // Close modal and clear input
+                    setIsModalOpen(false);
+                    setPlayerJsonInput('');
+                    setSyncError('');
+                    
+                } catch (error) {
+                    setSyncError(`Error parsing JSON: ${error.message}`);
+                }
             };
 
             // --- MEMOIZED CALCULATIONS ---
@@ -4964,9 +5101,33 @@
 
             return (
                 <div className="max-w-7xl mx-auto">
-                    <h1 className="text-3xl md:text-4xl font-bold text-white text-center mb-8">
-                        Clash of Clans Hero Upgrades
-                    </h1>
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+                        <h1 className="text-3xl md:text-4xl font-bold text-white text-center md:text-left">
+                            Clash of Clans Hero Upgrades
+                        </h1>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Sync Player Data
+                        </button>
+                    </div>
+
+                    <SyncModal
+                        isOpen={isModalOpen}
+                        onClose={() => {
+                            setIsModalOpen(false);
+                            setPlayerJsonInput('');
+                            setSyncError('');
+                        }}
+                        playerJsonInput={playerJsonInput}
+                        setPlayerJsonInput={setPlayerJsonInput}
+                        onSync={handleSyncPlayerData}
+                        syncError={syncError}
+                    />
 
                     <BuffControls buffs={buffs} onBuffChange={handleBuffChange} />
 
