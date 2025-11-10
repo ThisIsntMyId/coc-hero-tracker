@@ -4559,7 +4559,120 @@
             );
         }
 
-        // Global Summary Component (Sidebar)
+        // Detailed Savings Table Component
+        function DetailedSavingsTable({ breakdown, buffs }) {
+            if (breakdown.heroBreakdowns.length === 0) {
+                return (
+                    <div className="bg-gray-800 rounded-xl shadow-lg p-6">
+                        <h2 className="text-2xl font-bold text-white text-center mb-4">Total Savings (All Heroes)</h2>
+                        <p className="text-gray-400 text-center">No pending upgrades. Set target levels for heroes to see savings.</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="bg-gray-800 rounded-xl shadow-lg p-6">
+                    <h2 className="text-2xl font-bold text-white text-center mb-6">Total Savings (All Heroes)</h2>
+                    
+                    {/* Detailed Breakdown Table */}
+                    <div className="overflow-x-auto mb-6">
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-gray-300 uppercase bg-gray-700">
+                                <tr>
+                                    <th className="py-3 px-4">Hero</th>
+                                    <th className="py-3 px-4">Levels</th>
+                                    <th className="py-3 px-4">Original Time</th>
+                                    <th className="py-3 px-4">Hammer Jam</th>
+                                    <th className="py-3 px-4">Gold Pass</th>
+                                    <th className="py-3 px-4">After % Buffs</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-700">
+                                {breakdown.heroBreakdowns.map(hero => (
+                                    <tr key={hero.heroId} className="hover:bg-gray-700/50 transition-colors">
+                                        <td className="py-3 px-4 font-medium text-white">{hero.heroName}</td>
+                                        <td className="py-3 px-4 text-gray-300">{hero.levelRange}</td>
+                                        <td className="py-3 px-4 text-gray-300">{formatTime(hero.originalMinutes)}</td>
+                                        <td className="py-3 px-4 text-red-400">
+                                            {hero.hammerJamReduction > 0 ? `-${formatTime(hero.hammerJamReduction)}` : '-'}
+                                        </td>
+                                        <td className="py-3 px-4 text-red-400">
+                                            {hero.goldPassReduction > 0 ? `-${formatTime(hero.goldPassReduction)}` : '-'}
+                                        </td>
+                                        <td className="py-3 px-4 text-blue-300 font-semibold">{formatTime(hero.afterPercentBuffs)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Summary Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-700">
+                        {/* Left Column - Breakdown */}
+                        <div className="space-y-3">
+                            <h3 className="text-lg font-semibold text-white mb-3">Time Breakdown</h3>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-400">Total Original Time:</span>
+                                <span className="text-white font-semibold">{formatTime(breakdown.totalOriginal)}</span>
+                            </div>
+                            {buffs.hammerJam && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-400">⚒️ Hammer Jam (50%):</span>
+                                    <span className="text-red-400 font-semibold">-{formatTime(breakdown.totalHammerReduction)}</span>
+                                </div>
+                            )}
+                            {buffs.goldPass > 0 && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-400">⭐ Gold Pass ({(buffs.goldPass * 100).toFixed(0)}%):</span>
+                                    <span className="text-red-400 font-semibold">-{formatTime(breakdown.totalGoldPassReduction)}</span>
+                                </div>
+                            )}
+                            {breakdown.flatReduction > 0 && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-400">🧪 Potions & Bites:</span>
+                                    <span className="text-red-400 font-semibold">-{formatTime(breakdown.flatReduction)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-600">
+                                <span className="text-white font-semibold">💾 Total Time Saved:</span>
+                                <span className="text-green-400 font-bold text-lg">-{formatTime(breakdown.totalSaved)}</span>
+                            </div>
+                        </div>
+
+                        {/* Right Column - Sequential vs Parallel */}
+                        <div className="space-y-3">
+                            <h3 className="text-lg font-semibold text-white mb-3">Final Time Needed</h3>
+                            <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-gray-300">📋 Sequential (one-by-one):</span>
+                                        <span className="text-yellow-300 font-bold text-lg">{formatTime(breakdown.sequentialTime)}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500">If you upgrade heroes one after another</p>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-gray-300">⚡ Parallel (simultaneous):</span>
+                                        <span className="text-green-400 font-bold text-lg">{formatTime(breakdown.parallelTime)}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500">If you upgrade all heroes at the same time</p>
+                                </div>
+                                {breakdown.sequentialTime > breakdown.parallelTime && (
+                                    <div className="pt-2 border-t border-gray-600">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-cyan-300 text-sm">⏱️ Time saved (parallel):</span>
+                                            <span className="text-cyan-300 font-bold">{formatTime(breakdown.sequentialTime - breakdown.parallelTime)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Keep old GlobalSummary for backward compatibility (if needed elsewhere)
         function GlobalSummary({ summary }) {
             return (
                 <div className="bg-gray-800 rounded-xl shadow-lg p-6">
@@ -4691,32 +4804,94 @@
 
             }, [activeHeroId, heroes, buffs]);
 
-            // 2. Calculate global summary for ALL heroes
-            const globalSummary = useMemo(() => {
+            // 2. Calculate detailed breakdown for ALL heroes
+            const detailedBreakdown = useMemo(() => {
                 const { hammerJam, goldPass, biteCount, potionCount } = buffs;
-                const globalFlatReduction = (biteCount * 30) + (potionCount * 9 * 60);
-                let globalPendingBuffedMinutes = 0;
-
+                const heroBreakdowns = [];
+                
                 for (const heroId in heroes) {
                     const hero = heroes[heroId];
+                    let originalMinutes = 0;
+                    let afterHammerJam = 0;
+                    let afterGoldPass = 0;
+                    
+                    // Calculate for pending levels only
                     hero.data.forEach(level => {
                         const rowLevel = parseInt(level.l, 10);
                         if (rowLevel > hero.currentLevel && rowLevel <= hero.targetLevel) {
-                            const originalMinutes = parseTime(level.t);
-                            let buffedMinutes = originalMinutes;
-                            if (originalMinutes > 0) {
-                                if (hammerJam) buffedMinutes *= 0.5;
-                                if (goldPass > 0) buffedMinutes *= (1 - goldPass);
+                            const minutes = parseTime(level.t);
+                            originalMinutes += minutes;
+                            
+                            let buffed = minutes;
+                            if (minutes > 0) {
+                                if (hammerJam) buffed *= 0.5;
                             }
-                            globalPendingBuffedMinutes += buffedMinutes;
+                            afterHammerJam += buffed;
+                            
+                            if (minutes > 0) {
+                                if (goldPass > 0) buffed *= (1 - goldPass);
+                            }
+                            afterGoldPass += buffed;
                         }
                     });
+                    
+                    // Only include heroes with pending upgrades
+                    if (originalMinutes > 0) {
+                        const hammerJamReduction = originalMinutes - afterHammerJam;
+                        const goldPassReduction = afterHammerJam - afterGoldPass;
+                        
+                        heroBreakdowns.push({
+                            heroId,
+                            heroName: hero.name,
+                            levelRange: `${hero.currentLevel} → ${hero.targetLevel}`,
+                            originalMinutes,
+                            hammerJamReduction,
+                            goldPassReduction,
+                            afterPercentBuffs: afterGoldPass
+                        });
+                    }
                 }
-
-                const globalFinalTime = Math.max(0, globalPendingBuffedMinutes - globalFlatReduction);
-                return { globalPendingBuffedMinutes, globalFlatReduction, globalFinalTime };
-
+                
+                // Calculate totals
+                const totalOriginal = heroBreakdowns.reduce((sum, h) => sum + h.originalMinutes, 0);
+                const totalAfterPercent = heroBreakdowns.reduce((sum, h) => sum + h.afterPercentBuffs, 0);
+                const totalHammerReduction = heroBreakdowns.reduce((sum, h) => sum + h.hammerJamReduction, 0);
+                const totalGoldPassReduction = heroBreakdowns.reduce((sum, h) => sum + h.goldPassReduction, 0);
+                
+                // Flat reductions (potions/bites)
+                const flatReduction = (biteCount * 30) + (potionCount * 9 * 60);
+                
+                // Sequential = sum all heroes (doing one after another)
+                const sequentialTime = Math.max(0, totalAfterPercent - flatReduction);
+                
+                // Parallel = max single hero (all heroes upgrading simultaneously)
+                const parallelTime = Math.max(0, 
+                    Math.max(...heroBreakdowns.map(h => h.afterPercentBuffs), 0) - flatReduction
+                );
+                
+                const totalSaved = totalOriginal - sequentialTime;
+                
+                return {
+                    heroBreakdowns,
+                    totalOriginal,
+                    totalHammerReduction,
+                    totalGoldPassReduction,
+                    totalAfterPercent,
+                    flatReduction,
+                    sequentialTime,
+                    parallelTime,
+                    totalSaved
+                };
             }, [heroes, buffs]);
+
+            // Keep old globalSummary for backward compatibility
+            const globalSummary = useMemo(() => {
+                return {
+                    globalPendingBuffedMinutes: detailedBreakdown.totalAfterPercent,
+                    globalFlatReduction: detailedBreakdown.flatReduction,
+                    globalFinalTime: detailedBreakdown.sequentialTime
+                };
+            }, [detailedBreakdown]);
 
 
             // --- RENDER ---
@@ -4729,6 +4904,11 @@
                     </h1>
 
                     <BuffControls buffs={buffs} onBuffChange={handleBuffChange} />
+
+                    {/* Detailed Savings Table - Center Position */}
+                    <div className="mb-8">
+                        <DetailedSavingsTable breakdown={detailedBreakdown} buffs={buffs} />
+                    </div>
 
                     <HeroTabs 
                         heroes={heroes} 
@@ -4751,7 +4931,7 @@
                             )}
                         </div>
 
-                        {/* Right Column: Summaries */}
+                        {/* Right Column: Hero Summary */}
                         <div className="lg:col-span-1 flex flex-col gap-8">
                             {activeHero ? (
                                 <HeroSummary 
@@ -4760,7 +4940,6 @@
                                     summary={processedActiveHeroData.summary}
                                 />
                             ) : null}
-                            <GlobalSummary summary={globalSummary} />
                         </div>
                     </div>
                 </div>
