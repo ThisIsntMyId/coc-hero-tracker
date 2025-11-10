@@ -4697,11 +4697,39 @@
 
         // --- MAIN APP COMPONENT ---
         function App() {
-            const { useState, useMemo } = React;
+            const { useState, useMemo, useEffect } = React;
 
             // --- STATE ---
             // 1. Initialize and clean the hero data
             const [heroes, setHeroes] = useState(() => {
+                // Try to load from localStorage first
+                const savedHeroes = localStorage.getItem('cocHeroUpgrader_heroes');
+                
+                if (savedHeroes) {
+                    try {
+                        const parsed = JSON.parse(savedHeroes);
+                        // Merge saved levels with preset data structure
+                        const cleanedData = {};
+                        for (const heroId in presetRawData) {
+                            const hero = presetRawData[heroId];
+                            const cleanedLevels = cleanRawJson(hero.data);
+                            const maxLevel = cleanedLevels.length > 0 ? parseInt(cleanedLevels[cleanedLevels.length - 1].l, 10) : 1;
+                            
+                            cleanedData[heroId] = {
+                                id: heroId,
+                                name: hero.name,
+                                data: cleanedLevels,
+                                currentLevel: (parsed[heroId] && parsed[heroId].currentLevel) || 1,
+                                targetLevel: (parsed[heroId] && parsed[heroId].targetLevel) || maxLevel
+                            };
+                        }
+                        return cleanedData;
+                    } catch (e) {
+                        console.error('Failed to parse saved heroes:', e);
+                    }
+                }
+                
+                // Fallback to default initialization
                 const cleanedData = {};
                 for (const heroId in presetRawData) {
                     const hero = presetRawData[heroId];
@@ -4720,13 +4748,50 @@
             });
 
             // 2. Global buff and navigation state
-            const [activeHeroId, setActiveHeroId] = useState(Object.keys(heroes)[0]);
-            const [buffs, setBuffs] = useState({
-                hammerJam: false,
-                goldPass: 0,
-                biteCount: 0,
-                potionCount: 0
+            const [activeHeroId, setActiveHeroId] = useState(() => {
+                const savedActiveHero = localStorage.getItem('cocHeroUpgrader_activeHeroId');
+                return savedActiveHero || Object.keys(heroes)[0];
             });
+            
+            const [buffs, setBuffs] = useState(() => {
+                const savedBuffs = localStorage.getItem('cocHeroUpgrader_buffs');
+                if (savedBuffs) {
+                    try {
+                        return JSON.parse(savedBuffs);
+                    } catch (e) {
+                        console.error('Failed to parse saved buffs:', e);
+                    }
+                }
+                return {
+                    hammerJam: false,
+                    goldPass: 0,
+                    biteCount: 0,
+                    potionCount: 0
+                };
+            });
+
+            // --- LOCALSTORAGE SYNC ---
+            // Save heroes to localStorage whenever they change
+            useEffect(() => {
+                const heroLevels = {};
+                for (const heroId in heroes) {
+                    heroLevels[heroId] = {
+                        currentLevel: heroes[heroId].currentLevel,
+                        targetLevel: heroes[heroId].targetLevel
+                    };
+                }
+                localStorage.setItem('cocHeroUpgrader_heroes', JSON.stringify(heroLevels));
+            }, [heroes]);
+
+            // Save buffs to localStorage whenever they change
+            useEffect(() => {
+                localStorage.setItem('cocHeroUpgrader_buffs', JSON.stringify(buffs));
+            }, [buffs]);
+
+            // Save active hero to localStorage whenever it changes
+            useEffect(() => {
+                localStorage.setItem('cocHeroUpgrader_activeHeroId', activeHeroId);
+            }, [activeHeroId]);
 
             // --- HANDLERS ---
             const handleBuffChange = (buffName, value) => {
