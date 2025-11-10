@@ -1,0 +1,4777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoC Hero Upgrade Calculator (React)</title>
+    <!-- 1. Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. Load React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- 3. Load Babel for JSX -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+        }
+        /* Custom scrollbar for table container */
+        .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #374151; border-radius: 10px; }
+        .table-container::-webkit-scrollbar-thumb { background: #6b7280; border-radius: 10px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        /* Tweak for toggle switch */
+        input[type="checkbox"]:checked { background-color: #60A5FA; /* blue-400 */ }
+        /* Highlight for current level row */
+        tr.current-level {
+            background-color: #3B82F6 !important; /* blue-600 */
+            font-weight: 600;
+        }
+        /* Number input: hide arrows */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none; margin: 0;
+        }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 p-4 md:p-8">
+
+    <!-- This is where our React app will be mounted -->
+    <div id="root"></div>
+
+    <!-- 4. Our React App (written in JSX) -->
+    <script type="text/babel">
+
+        // --- DATA & HELPERS ---
+
+        // Key map for cleaning raw data
+        const keyMap = {
+            "Level\n": "l",
+            "Upgrade Cost\n": "c",
+            "Upgrade Time\n": "t"
+        };
+
+        // This is now the SINGLE SOURCE OF TRUTH.
+        // Add your raw JSON data here, including the header row.
+        // const presetRawData = {
+        //     king: {
+        //         name: "Barbarian King",
+        //         data: [
+        //             { "Level\n": "Level\n", "Upgrade Cost\n": "Upgrade Cost\n", "Upgrade Time\n": "Upgrade Time\n" },
+        //             { "Level\n": "1\n", "Upgrade Cost\n": "N/A\n", "Upgrade Time\n": "N/A\n" },
+        //             { "Level\n": "2\n", "Upgrade Cost\n": "5,000\n", "Upgrade Time\n": "2h\n" },
+        //             { "Level\n": "3\n", "Upgrade Cost\n": "5,500\n", "Upgrade Time\n": "4h\n" },
+        //             { "Level\n": "4\n", "Upgrade Cost\n": "6,000\n", "Upgrade Time\n": "8h\n" },
+        //             { "Level\n": "5\n", "Upgrade Cost\n": "6,500\n", "Upgrade Time\n": "10h\n" },
+        //             { "Level\n": "6\n", "Upgrade Cost\n": "7,000\n", "Upgrade Time\n": "12h\n" },
+        //             { "Level\n": "7\n", "Upgrade Cost\n": "7,500\n", "Upgrade Time\n": "14h\n" },
+        //             { "Level\n": "8\n", "Upgrade Cost\n": "8,000\n", "Upgrade Time\n": "16h\n" },
+        //             { "Level\n": "9\n", "Upgrade Cost\n": "8,500\n", "Upgrade Time\n": "18h\n" },
+        //             { "Level\n": "10\n", "Upgrade Cost\n": "10,000\n", "Upgrade Time\n": "20h\n" }
+        //         ]
+        //     },
+        //     queen: {
+        //         name: "Archer Queen",
+        //         data: [
+        //             { "Level\n": "Level\n", "Upgrade Cost\n": "Upgrade Cost\n", "Upgrade Time\n": "Upgrade Time\n" },
+        //             { "Level\n": "1\n", "Upgrade Cost\n": "N/A\n", "Upgrade Time\n": "N/A\n" },
+        //             { "Level\n": "2\n", "Upgrade Cost\n": "5,000\n", "Upgrade Time\n": "2h\n" },
+        //             { "Level\n": "3\n", "Upgrade Cost\n": "5,500\n", "Upgrade Time\n": "4h\n" },
+        //             { "Level\n": "4\n", "Upgrade Cost\n": "6,000\n", "Upgrade Time\n": "8h\n" },
+        //             { "Level\n": "5\n", "Upgrade Cost\n": "6,500\n", "Upgrade Time\n": "10h\n" }
+        //         ]
+        //     }
+        // };
+
+                    
+        let presetRawData = {
+                king: {
+                    name: "Barbarian King",
+                    data: [
+                        {
+                            "Level\n": "Level\n",
+                            "Damage per Second\n": "Damage per Second\n",
+                            "Damage per Hit\n": "Damage per Hit\n",
+                            "Hitpoints\n": "Hitpoints\n",
+                            "Health Recovery\n": "Health Recovery\n",
+                            "Upgrade Cost\n": "Upgrade Cost\n",
+                            "Upgrade Time\n": "Upgrade Time\n",
+                            "Hero Hall Level Required\n": "Hero Hall Level Required\n"
+                        },
+                        {
+                            "Level\n": "1\n",
+                            "Damage per Second\n": "102\n",
+                            "Damage per Hit\n": "122.4\n",
+                            "Hitpoints\n": "1,445\n",
+                            "Health Recovery\n": "200\n",
+                            "Upgrade Cost\n": "N/A\n",
+                            "Upgrade Time\n": "N/A\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "2\n",
+                            "Damage per Second\n": "104\n",
+                            "Damage per Hit\n": "124.8\n",
+                            "Hitpoints\n": "1,481\n",
+                            "Health Recovery\n": "200\n",
+                            "Upgrade Cost\n": "5,000\n",
+                            "Upgrade Time\n": "2h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "3\n",
+                            "Damage per Second\n": "105\n",
+                            "Damage per Hit\n": "126\n",
+                            "Hitpoints\n": "1,518\n",
+                            "Health Recovery\n": "200\n",
+                            "Upgrade Cost\n": "5,500\n",
+                            "Upgrade Time\n": "4h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "4\n",
+                            "Damage per Second\n": "108\n",
+                            "Damage per Hit\n": "129.6\n",
+                            "Hitpoints\n": "1,556\n",
+                            "Health Recovery\n": "200\n",
+                            "Upgrade Cost\n": "6,000\n",
+                            "Upgrade Time\n": "8h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "5\n",
+                            "Damage per Second\n": "110\n",
+                            "Damage per Hit\n": "132\n",
+                            "Hitpoints\n": "1,595\n",
+                            "Health Recovery\n": "250\n",
+                            "Upgrade Cost\n": "6,500\n",
+                            "Upgrade Time\n": "10h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "6\n",
+                            "Damage per Second\n": "112\n",
+                            "Damage per Hit\n": "134.4\n",
+                            "Hitpoints\n": "1,635\n",
+                            "Health Recovery\n": "250\n",
+                            "Upgrade Cost\n": "7,000\n",
+                            "Upgrade Time\n": "12h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "7\n",
+                            "Damage per Second\n": "115\n",
+                            "Damage per Hit\n": "138\n",
+                            "Hitpoints\n": "1,675\n",
+                            "Health Recovery\n": "250\n",
+                            "Upgrade Cost\n": "7,500\n",
+                            "Upgrade Time\n": "14h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "8\n",
+                            "Damage per Second\n": "116\n",
+                            "Damage per Hit\n": "139.2\n",
+                            "Hitpoints\n": "1,717\n",
+                            "Health Recovery\n": "250\n",
+                            "Upgrade Cost\n": "8,000\n",
+                            "Upgrade Time\n": "16h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "9\n",
+                            "Damage per Second\n": "119\n",
+                            "Damage per Hit\n": "142.8\n",
+                            "Hitpoints\n": "1,760\n",
+                            "Health Recovery\n": "250\n",
+                            "Upgrade Cost\n": "8,500\n",
+                            "Upgrade Time\n": "18h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "10\n",
+                            "Damage per Second\n": "122\n",
+                            "Damage per Hit\n": "146.4\n",
+                            "Hitpoints\n": "1,805\n",
+                            "Health Recovery\n": "310\n",
+                            "Upgrade Cost\n": "10,000\n",
+                            "Upgrade Time\n": "20h\n",
+                            "Hero Hall Level Required\n": "1\n"
+                        },
+                        {
+                            "Level\n": "11\n",
+                            "Damage per Second\n": "124\n",
+                            "Damage per Hit\n": "148.8\n",
+                            "Hitpoints\n": "1,850\n",
+                            "Health Recovery\n": "310\n",
+                            "Upgrade Cost\n": "10,500\n",
+                            "Upgrade Time\n": "22h\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "12\n",
+                            "Damage per Second\n": "127\n",
+                            "Damage per Hit\n": "152.4\n",
+                            "Hitpoints\n": "1,896\n",
+                            "Health Recovery\n": "310\n",
+                            "Upgrade Cost\n": "11,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "13\n",
+                            "Damage per Second\n": "129\n",
+                            "Damage per Hit\n": "154.8\n",
+                            "Hitpoints\n": "1,943\n",
+                            "Health Recovery\n": "310\n",
+                            "Upgrade Cost\n": "11,500\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "14\n",
+                            "Damage per Second\n": "132\n",
+                            "Damage per Hit\n": "158.4\n",
+                            "Hitpoints\n": "1,992\n",
+                            "Health Recovery\n": "310\n",
+                            "Upgrade Cost\n": "12,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "15\n",
+                            "Damage per Second\n": "134\n",
+                            "Damage per Hit\n": "160.8\n",
+                            "Hitpoints\n": "2,042\n",
+                            "Health Recovery\n": "375\n",
+                            "Upgrade Cost\n": "12,500\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "16\n",
+                            "Damage per Second\n": "137\n",
+                            "Damage per Hit\n": "164.4\n",
+                            "Hitpoints\n": "2,093\n",
+                            "Health Recovery\n": "375\n",
+                            "Upgrade Cost\n": "13,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "17\n",
+                            "Damage per Second\n": "139\n",
+                            "Damage per Hit\n": "166.8\n",
+                            "Hitpoints\n": "2,145\n",
+                            "Health Recovery\n": "375\n",
+                            "Upgrade Cost\n": "13,500\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "18\n",
+                            "Damage per Second\n": "143\n",
+                            "Damage per Hit\n": "171.6\n",
+                            "Hitpoints\n": "2,198\n",
+                            "Health Recovery\n": "375\n",
+                            "Upgrade Cost\n": "14,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "19\n",
+                            "Damage per Second\n": "145\n",
+                            "Damage per Hit\n": "174\n",
+                            "Hitpoints\n": "2,253\n",
+                            "Health Recovery\n": "375\n",
+                            "Upgrade Cost\n": "14,500\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "20\n",
+                            "Damage per Second\n": "148\n",
+                            "Damage per Hit\n": "177.6\n",
+                            "Hitpoints\n": "2,309\n",
+                            "Health Recovery\n": "450\n",
+                            "Upgrade Cost\n": "15,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "2\n"
+                        },
+                        {
+                            "Level\n": "21\n",
+                            "Damage per Second\n": "151\n",
+                            "Damage per Hit\n": "181.2\n",
+                            "Hitpoints\n": "2,367\n",
+                            "Health Recovery\n": "450\n",
+                            "Upgrade Cost\n": "17,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "22\n",
+                            "Damage per Second\n": "154\n",
+                            "Damage per Hit\n": "184.8\n",
+                            "Hitpoints\n": "2,427\n",
+                            "Health Recovery\n": "450\n",
+                            "Upgrade Cost\n": "19,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "23\n",
+                            "Damage per Second\n": "157\n",
+                            "Damage per Hit\n": "188.4\n",
+                            "Hitpoints\n": "2,487\n",
+                            "Health Recovery\n": "450\n",
+                            "Upgrade Cost\n": "21,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "24\n",
+                            "Damage per Second\n": "161\n",
+                            "Damage per Hit\n": "193.2\n",
+                            "Hitpoints\n": "2,549\n",
+                            "Health Recovery\n": "450\n",
+                            "Upgrade Cost\n": "23,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "25\n",
+                            "Damage per Second\n": "164\n",
+                            "Damage per Hit\n": "196.8\n",
+                            "Hitpoints\n": "2,613\n",
+                            "Health Recovery\n": "525\n",
+                            "Upgrade Cost\n": "25,000\n",
+                            "Upgrade Time\n": "1d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "26\n",
+                            "Damage per Second\n": "167\n",
+                            "Damage per Hit\n": "200.4\n",
+                            "Hitpoints\n": "2,678\n",
+                            "Health Recovery\n": "525\n",
+                            "Upgrade Cost\n": "27,000\n",
+                            "Upgrade Time\n": "2d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "27\n",
+                            "Damage per Second\n": "170\n",
+                            "Damage per Hit\n": "204\n",
+                            "Hitpoints\n": "2,746\n",
+                            "Health Recovery\n": "525\n",
+                            "Upgrade Cost\n": "29,000\n",
+                            "Upgrade Time\n": "2d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "28\n",
+                            "Damage per Second\n": "173\n",
+                            "Damage per Hit\n": "207.6\n",
+                            "Hitpoints\n": "2,814\n",
+                            "Health Recovery\n": "525\n",
+                            "Upgrade Cost\n": "31,000\n",
+                            "Upgrade Time\n": "2d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "29\n",
+                            "Damage per Second\n": "177\n",
+                            "Damage per Hit\n": "212.4\n",
+                            "Hitpoints\n": "2,885\n",
+                            "Health Recovery\n": "525\n",
+                            "Upgrade Cost\n": "33,000\n",
+                            "Upgrade Time\n": "2d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "30\n",
+                            "Damage per Second\n": "181\n",
+                            "Damage per Hit\n": "217.2\n",
+                            "Hitpoints\n": "2,956\n",
+                            "Health Recovery\n": "625\n",
+                            "Upgrade Cost\n": "35,000\n",
+                            "Upgrade Time\n": "2d\n",
+                            "Hero Hall Level Required\n": "3\n"
+                        },
+                        {
+                            "Level\n": "31\n",
+                            "Damage per Second\n": "184\n",
+                            "Damage per Hit\n": "220.8\n",
+                            "Hitpoints\n": "3,030\n",
+                            "Health Recovery\n": "625\n",
+                            "Upgrade Cost\n": "37,000\n",
+                            "Upgrade Time\n": "2d 6h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "32\n",
+                            "Damage per Second\n": "188\n",
+                            "Damage per Hit\n": "225.6\n",
+                            "Hitpoints\n": "3,107\n",
+                            "Health Recovery\n": "625\n",
+                            "Upgrade Cost\n": "39,000\n",
+                            "Upgrade Time\n": "2d 6h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "33\n",
+                            "Damage per Second\n": "192\n",
+                            "Damage per Hit\n": "230.4\n",
+                            "Hitpoints\n": "3,184\n",
+                            "Health Recovery\n": "625\n",
+                            "Upgrade Cost\n": "41,000\n",
+                            "Upgrade Time\n": "2d 6h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "34\n",
+                            "Damage per Second\n": "196\n",
+                            "Damage per Hit\n": "235.2\n",
+                            "Hitpoints\n": "3,264\n",
+                            "Health Recovery\n": "625\n",
+                            "Upgrade Cost\n": "43,000\n",
+                            "Upgrade Time\n": "2d 6h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "35\n",
+                            "Damage per Second\n": "200\n",
+                            "Damage per Hit\n": "240\n",
+                            "Hitpoints\n": "3,346\n",
+                            "Health Recovery\n": "725\n",
+                            "Upgrade Cost\n": "45,000\n",
+                            "Upgrade Time\n": "2d 6h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "36\n",
+                            "Damage per Second\n": "203\n",
+                            "Damage per Hit\n": "243.6\n",
+                            "Hitpoints\n": "3,429\n",
+                            "Health Recovery\n": "725\n",
+                            "Upgrade Cost\n": "47,000\n",
+                            "Upgrade Time\n": "2d 12h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "37\n",
+                            "Damage per Second\n": "207\n",
+                            "Damage per Hit\n": "248.4\n",
+                            "Hitpoints\n": "3,515\n",
+                            "Health Recovery\n": "725\n",
+                            "Upgrade Cost\n": "49,000\n",
+                            "Upgrade Time\n": "2d 12h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "38\n",
+                            "Damage per Second\n": "212\n",
+                            "Damage per Hit\n": "254.4\n",
+                            "Hitpoints\n": "3,602\n",
+                            "Health Recovery\n": "725\n",
+                            "Upgrade Cost\n": "51,000\n",
+                            "Upgrade Time\n": "2d 12h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "39\n",
+                            "Damage per Second\n": "216\n",
+                            "Damage per Hit\n": "259.2\n",
+                            "Hitpoints\n": "3,692\n",
+                            "Health Recovery\n": "725\n",
+                            "Upgrade Cost\n": "53,000\n",
+                            "Upgrade Time\n": "2d 12h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "40\n",
+                            "Damage per Second\n": "220\n",
+                            "Damage per Hit\n": "264\n",
+                            "Hitpoints\n": "3,785\n",
+                            "Health Recovery\n": "850\n",
+                            "Upgrade Cost\n": "55,000\n",
+                            "Upgrade Time\n": "2d 12h\n",
+                            "Hero Hall Level Required\n": "4\n"
+                        },
+                        {
+                            "Level\n": "41\n",
+                            "Damage per Second\n": "234\n",
+                            "Damage per Hit\n": "280.8\n",
+                            "Hitpoints\n": "3,879\n",
+                            "Health Recovery\n": "850\n",
+                            "Upgrade Cost\n": "58,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "42\n",
+                            "Damage per Second\n": "239\n",
+                            "Damage per Hit\n": "286.8\n",
+                            "Hitpoints\n": "3,976\n",
+                            "Health Recovery\n": "850\n",
+                            "Upgrade Cost\n": "61,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "43\n",
+                            "Damage per Second\n": "244\n",
+                            "Damage per Hit\n": "292.8\n",
+                            "Hitpoints\n": "4,076\n",
+                            "Health Recovery\n": "850\n",
+                            "Upgrade Cost\n": "64,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "44\n",
+                            "Damage per Second\n": "249\n",
+                            "Damage per Hit\n": "298.8\n",
+                            "Hitpoints\n": "4,178\n",
+                            "Health Recovery\n": "850\n",
+                            "Upgrade Cost\n": "67,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "45\n",
+                            "Damage per Second\n": "254\n",
+                            "Damage per Hit\n": "304.8\n",
+                            "Hitpoints\n": "4,282\n",
+                            "Health Recovery\n": "980\n",
+                            "Upgrade Cost\n": "70,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "46\n",
+                            "Damage per Second\n": "259\n",
+                            "Damage per Hit\n": "310.8\n",
+                            "Hitpoints\n": "4,389\n",
+                            "Health Recovery\n": "980\n",
+                            "Upgrade Cost\n": "73,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "47\n",
+                            "Damage per Second\n": "265\n",
+                            "Damage per Hit\n": "318\n",
+                            "Hitpoints\n": "4,499\n",
+                            "Health Recovery\n": "980\n",
+                            "Upgrade Cost\n": "76,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "48\n",
+                            "Damage per Second\n": "270\n",
+                            "Damage per Hit\n": "324\n",
+                            "Hitpoints\n": "4,611\n",
+                            "Health Recovery\n": "980\n",
+                            "Upgrade Cost\n": "79,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "49\n",
+                            "Damage per Second\n": "276\n",
+                            "Damage per Hit\n": "331.2\n",
+                            "Hitpoints\n": "4,727\n",
+                            "Health Recovery\n": "980\n",
+                            "Upgrade Cost\n": "82,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "50\n",
+                            "Damage per Second\n": "282\n",
+                            "Damage per Hit\n": "338.4\n",
+                            "Hitpoints\n": "4,845\n",
+                            "Health Recovery\n": "1,125\n",
+                            "Upgrade Cost\n": "85,000\n",
+                            "Upgrade Time\n": "3d\n",
+                            "Hero Hall Level Required\n": "5\n"
+                        },
+                        {
+                            "Level\n": "51\n",
+                            "Damage per Second\n": "288\n",
+                            "Damage per Hit\n": "345.6\n",
+                            "Hitpoints\n": "4,967\n",
+                            "Health Recovery\n": "1,125\n",
+                            "Upgrade Cost\n": "86,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "52\n",
+                            "Damage per Second\n": "294\n",
+                            "Damage per Hit\n": "352.8\n",
+                            "Hitpoints\n": "5,092\n",
+                            "Health Recovery\n": "1,125\n",
+                            "Upgrade Cost\n": "87,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "53\n",
+                            "Damage per Second\n": "300\n",
+                            "Damage per Hit\n": "360\n",
+                            "Hitpoints\n": "5,219\n",
+                            "Health Recovery\n": "1,125\n",
+                            "Upgrade Cost\n": "88,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "54\n",
+                            "Damage per Second\n": "307\n",
+                            "Damage per Hit\n": "368.4\n",
+                            "Hitpoints\n": "5,350\n",
+                            "Health Recovery\n": "1,125\n",
+                            "Upgrade Cost\n": "89,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "55\n",
+                            "Damage per Second\n": "314\n",
+                            "Damage per Hit\n": "376.8\n",
+                            "Hitpoints\n": "5,484\n",
+                            "Health Recovery\n": "1,300\n",
+                            "Upgrade Cost\n": "90,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "56\n",
+                            "Damage per Second\n": "320\n",
+                            "Damage per Hit\n": "384\n",
+                            "Hitpoints\n": "5,622\n",
+                            "Health Recovery\n": "1,300\n",
+                            "Upgrade Cost\n": "93,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "57\n",
+                            "Damage per Second\n": "327\n",
+                            "Damage per Hit\n": "392.4\n",
+                            "Hitpoints\n": "5,763\n",
+                            "Health Recovery\n": "1,300\n",
+                            "Upgrade Cost\n": "96,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "58\n",
+                            "Damage per Second\n": "334\n",
+                            "Damage per Hit\n": "400.8\n",
+                            "Hitpoints\n": "5,908\n",
+                            "Health Recovery\n": "1,300\n",
+                            "Upgrade Cost\n": "99,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "59\n",
+                            "Damage per Second\n": "341\n",
+                            "Damage per Hit\n": "409.2\n",
+                            "Hitpoints\n": "6,055\n",
+                            "Health Recovery\n": "1,300\n",
+                            "Upgrade Cost\n": "102,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "60\n",
+                            "Damage per Second\n": "349\n",
+                            "Damage per Hit\n": "418.8\n",
+                            "Hitpoints\n": "6,208\n",
+                            "Health Recovery\n": "1,490\n",
+                            "Upgrade Cost\n": "105,000\n",
+                            "Upgrade Time\n": "3d 12h\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "61\n",
+                            "Damage per Second\n": "355\n",
+                            "Damage per Hit\n": "426\n",
+                            "Hitpoints\n": "6,363\n",
+                            "Health Recovery\n": "1,490\n",
+                            "Upgrade Cost\n": "107,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "62\n",
+                            "Damage per Second\n": "362\n",
+                            "Damage per Hit\n": "434.4\n",
+                            "Hitpoints\n": "6,522\n",
+                            "Health Recovery\n": "1,490\n",
+                            "Upgrade Cost\n": "109,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "63\n",
+                            "Damage per Second\n": "370\n",
+                            "Damage per Hit\n": "444\n",
+                            "Hitpoints\n": "6,685\n",
+                            "Health Recovery\n": "1,490\n",
+                            "Upgrade Cost\n": "111,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "64\n",
+                            "Damage per Second\n": "377\n",
+                            "Damage per Hit\n": "452.4\n",
+                            "Hitpoints\n": "6,853\n",
+                            "Health Recovery\n": "1,490\n",
+                            "Upgrade Cost\n": "113,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "65\n",
+                            "Damage per Second\n": "385\n",
+                            "Damage per Hit\n": "462\n",
+                            "Hitpoints\n": "7,024\n",
+                            "Health Recovery\n": "1,700\n",
+                            "Upgrade Cost\n": "115,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "6\n"
+                        },
+                        {
+                            "Level\n": "66\n",
+                            "Damage per Second\n": "393\n",
+                            "Damage per Hit\n": "471.6\n",
+                            "Hitpoints\n": "7,200\n",
+                            "Health Recovery\n": "1,700\n",
+                            "Upgrade Cost\n": "117,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "67\n",
+                            "Damage per Second\n": "400\n",
+                            "Damage per Hit\n": "480\n",
+                            "Hitpoints\n": "7,378\n",
+                            "Health Recovery\n": "1,700\n",
+                            "Upgrade Cost\n": "119,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "68\n",
+                            "Damage per Second\n": "408\n",
+                            "Damage per Hit\n": "489.6\n",
+                            "Hitpoints\n": "7,557\n",
+                            "Health Recovery\n": "1,700\n",
+                            "Upgrade Cost\n": "121,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "69\n",
+                            "Damage per Second\n": "417\n",
+                            "Damage per Hit\n": "500.4\n",
+                            "Hitpoints\n": "7,735\n",
+                            "Health Recovery\n": "1,700\n",
+                            "Upgrade Cost\n": "123,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "70\n",
+                            "Damage per Second\n": "425\n",
+                            "Damage per Hit\n": "510\n",
+                            "Hitpoints\n": "7,905\n",
+                            "Health Recovery\n": "1,925\n",
+                            "Upgrade Cost\n": "125,000\n",
+                            "Upgrade Time\n": "4d\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "71\n",
+                            "Damage per Second\n": "434\n",
+                            "Damage per Hit\n": "520.8\n",
+                            "Hitpoints\n": "8,075\n",
+                            "Health Recovery\n": "1,925\n",
+                            "Upgrade Cost\n": "130,000\n",
+                            "Upgrade Time\n": "4d 12h\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "72\n",
+                            "Damage per Second\n": "442\n",
+                            "Damage per Hit\n": "530.4\n",
+                            "Hitpoints\n": "8,245\n",
+                            "Health Recovery\n": "1,925\n",
+                            "Upgrade Cost\n": "135,000\n",
+                            "Upgrade Time\n": "4d 12h\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "73\n",
+                            "Damage per Second\n": "451\n",
+                            "Damage per Hit\n": "541.2\n",
+                            "Hitpoints\n": "8,415\n",
+                            "Health Recovery\n": "1,925\n",
+                            "Upgrade Cost\n": "140,000\n",
+                            "Upgrade Time\n": "4d 12h\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "74\n",
+                            "Damage per Second\n": "459\n",
+                            "Damage per Hit\n": "550.8\n",
+                            "Hitpoints\n": "8,585\n",
+                            "Health Recovery\n": "1,925\n",
+                            "Upgrade Cost\n": "145,000\n",
+                            "Upgrade Time\n": "4d 12h\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "75\n",
+                            "Damage per Second\n": "468\n",
+                            "Damage per Hit\n": "561.6\n",
+                            "Hitpoints\n": "8,755\n",
+                            "Health Recovery\n": "2,150\n",
+                            "Upgrade Cost\n": "150,000\n",
+                            "Upgrade Time\n": "4d 12h\n",
+                            "Hero Hall Level Required\n": "7\n"
+                        },
+                        {
+                            "Level\n": "76\n",
+                            "Damage per Second\n": "475\n",
+                            "Damage per Hit\n": "570\n",
+                            "Hitpoints\n": "8,917\n",
+                            "Health Recovery\n": "2,150\n",
+                            "Upgrade Cost\n": "155,000\n",
+                            "Upgrade Time\n": "5d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "77\n",
+                            "Damage per Second\n": "483\n",
+                            "Damage per Hit\n": "579.6\n",
+                            "Hitpoints\n": "9,078\n",
+                            "Health Recovery\n": "2,150\n",
+                            "Upgrade Cost\n": "160,000\n",
+                            "Upgrade Time\n": "5d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "78\n",
+                            "Damage per Second\n": "490\n",
+                            "Damage per Hit\n": "588\n",
+                            "Hitpoints\n": "9,240\n",
+                            "Health Recovery\n": "2,150\n",
+                            "Upgrade Cost\n": "165,000\n",
+                            "Upgrade Time\n": "5d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "79\n",
+                            "Damage per Second\n": "498\n",
+                            "Damage per Hit\n": "597.6\n",
+                            "Hitpoints\n": "9,401\n",
+                            "Health Recovery\n": "2,150\n",
+                            "Upgrade Cost\n": "170,000\n",
+                            "Upgrade Time\n": "5d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "80\n",
+                            "Damage per Second\n": "506\n",
+                            "Damage per Hit\n": "607.2\n",
+                            "Hitpoints\n": "9,563\n",
+                            "Health Recovery\n": "2,350\n",
+                            "Upgrade Cost\n": "175,000\n",
+                            "Upgrade Time\n": "5d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "81\n",
+                            "Damage per Second\n": "513\n",
+                            "Damage per Hit\n": "615.6\n",
+                            "Hitpoints\n": "9,690\n",
+                            "Health Recovery\n": "2,350\n",
+                            "Upgrade Cost\n": "180,000\n",
+                            "Upgrade Time\n": "6d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "82\n",
+                            "Damage per Second\n": "519\n",
+                            "Damage per Hit\n": "622.8\n",
+                            "Hitpoints\n": "9,818\n",
+                            "Health Recovery\n": "2,350\n",
+                            "Upgrade Cost\n": "190,000\n",
+                            "Upgrade Time\n": "6d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "83\n",
+                            "Damage per Second\n": "526\n",
+                            "Damage per Hit\n": "631.2\n",
+                            "Hitpoints\n": "9,945\n",
+                            "Health Recovery\n": "2,350\n",
+                            "Upgrade Cost\n": "200,000\n",
+                            "Upgrade Time\n": "6d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "84\n",
+                            "Damage per Second\n": "533\n",
+                            "Damage per Hit\n": "639.6\n",
+                            "Hitpoints\n": "10,073\n",
+                            "Health Recovery\n": "2,350\n",
+                            "Upgrade Cost\n": "210,000\n",
+                            "Upgrade Time\n": "6d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "85\n",
+                            "Damage per Second\n": "540\n",
+                            "Damage per Hit\n": "648\n",
+                            "Hitpoints\n": "10,200\n",
+                            "Health Recovery\n": "2,500\n",
+                            "Upgrade Cost\n": "220,000\n",
+                            "Upgrade Time\n": "6d\n",
+                            "Hero Hall Level Required\n": "8\n"
+                        },
+                        {
+                            "Level\n": "86\n",
+                            "Damage per Second\n": "547\n",
+                            "Damage per Hit\n": "656.4\n",
+                            "Hitpoints\n": "10,328\n",
+                            "Health Recovery\n": "2,500\n",
+                            "Upgrade Cost\n": "230,000\n",
+                            "Upgrade Time\n": "7d\n",
+                            "Hero Hall Level Required\n": "9\n"
+                        },
+                        {
+                            "Level\n": "87\n",
+                            "Damage per Second\n": "553\n",
+                            "Damage per Hit\n": "663.6\n",
+                            "Hitpoints\n": "10,455\n",
+                            "Health Recovery\n": "2,500\n",
+                            "Upgrade Cost\n": "240,000\n",
+                            "Upgrade Time\n": "7d\n",
+                            "Hero Hall Level Required\n": "9\n"
+                        },
+                        {
+                            "Level\n": "88\n",
+                            "Damage per Second\n": "560\n",
+                            "Damage per Hit\n": "672\n",
+                            "Hitpoints\n": "10,583\n",
+                            "Health Recovery\n": "2,500\n",
+                            "Upgrade Cost\n": "250,000\n",
+                            "Upgrade Time\n": "7d\n",
+                            "Hero Hall Level Required\n": "9\n"
+                        },
+                        {
+                            "Level\n": "89\n",
+                            "Damage per Second\n": "567\n",
+                            "Damage per Hit\n": "680.4\n",
+                            "Hitpoints\n": "10,710\n",
+                            "Health Recovery\n": "2,500\n",
+                            "Upgrade Cost\n": "260,000\n",
+                            "Upgrade Time\n": "7d\n",
+                            "Hero Hall Level Required\n": "9\n"
+                        },
+                        {
+                            "Level\n": "90\n",
+                            "Damage per Second\n": "574\n",
+                            "Damage per Hit\n": "688.8\n",
+                            "Hitpoints\n": "10,838\n",
+                            "Health Recovery\n": "2,650\n",
+                            "Upgrade Cost\n": "270,000\n",
+                            "Upgrade Time\n": "7d\n",
+                            "Hero Hall Level Required\n": "9\n"
+                        },
+                        {
+                            "Level\n": "91\n",
+                            "Damage per Second\n": "581\n",
+                            "Damage per Hit\n": "697.2\n",
+                            "Hitpoints\n": "10,965\n",
+                            "Health Recovery\n": "2,650\n",
+                            "Upgrade Cost\n": "280,000\n",
+                            "Upgrade Time\n": "7d 12h\n",
+                            "Hero Hall Level Required\n": "10\n"
+                        },
+                        {
+                            "Level\n": "92\n",
+                            "Damage per Second\n": "587\n",
+                            "Damage per Hit\n": "704.4\n",
+                            "Hitpoints\n": "11,093\n",
+                            "Health Recovery\n": "2,650\n",
+                            "Upgrade Cost\n": "290,000\n",
+                            "Upgrade Time\n": "7d 12h\n",
+                            "Hero Hall Level Required\n": "10\n"
+                        },
+                        {
+                            "Level\n": "93\n",
+                            "Damage per Second\n": "594\n",
+                            "Damage per Hit\n": "712.8\n",
+                            "Hitpoints\n": "11,220\n",
+                            "Health Recovery\n": "2,650\n",
+                            "Upgrade Cost\n": "300,000\n",
+                            "Upgrade Time\n": "7d 12h\n",
+                            "Hero Hall Level Required\n": "10\n"
+                        },
+                        {
+                            "Level\n": "94\n",
+                            "Damage per Second\n": "601\n",
+                            "Damage per Hit\n": "721.2\n",
+                            "Hitpoints\n": "11,348\n",
+                            "Health Recovery\n": "2,650\n",
+                            "Upgrade Cost\n": "310,000\n",
+                            "Upgrade Time\n": "7d 12h\n",
+                            "Hero Hall Level Required\n": "10\n"
+                        },
+                        {
+                            "Level\n": "95\n",
+                            "Damage per Second\n": "608\n",
+                            "Damage per Hit\n": "729.6\n",
+                            "Hitpoints\n": "11,475\n",
+                            "Health Recovery\n": "2,800\n",
+                            "Upgrade Cost\n": "320,000\n",
+                            "Upgrade Time\n": "7d 12h\n",
+                            "Hero Hall Level Required\n": "10\n"
+                        },
+                        {
+                            "Level\n": "96\n",
+                            "Damage per Second\n": "615\n",
+                            "Damage per Hit\n": "738\n",
+                            "Hitpoints\n": "11,600\n",
+                            "Health Recovery\n": "2,800\n",
+                            "Upgrade Cost\n": "340,000\n",
+                            "Upgrade Time\n": "8d\n",
+                            "Hero Hall Level Required\n": "11\n"
+                        },
+                        {
+                            "Level\n": "97\n",
+                            "Damage per Second\n": "622\n",
+                            "Damage per Hit\n": "746.4\n",
+                            "Hitpoints\n": "11,725\n",
+                            "Health Recovery\n": "2,800\n",
+                            "Upgrade Cost\n": "350,000\n",
+                            "Upgrade Time\n": "8d\n",
+                            "Hero Hall Level Required\n": "11\n"
+                        },
+                        {
+                            "Level\n": "98\n",
+                            "Damage per Second\n": "629\n",
+                            "Damage per Hit\n": "754.8\n",
+                            "Hitpoints\n": "11,850\n",
+                            "Health Recovery\n": "2,800\n",
+                            "Upgrade Cost\n": "360,000\n",
+                            "Upgrade Time\n": "8d\n",
+                            "Hero Hall Level Required\n": "11\n"
+                        },
+                        {
+                            "Level\n": "99\n",
+                            "Damage per Second\n": "636\n",
+                            "Damage per Hit\n": "763.2\n",
+                            "Hitpoints\n": "11,975\n",
+                            "Health Recovery\n": "2,800\n",
+                            "Upgrade Cost\n": "370,000\n",
+                            "Upgrade Time\n": "8d\n",
+                            "Hero Hall Level Required\n": "11\n"
+                        },
+                        {
+                            "Level\n": "100\n",
+                            "Damage per Second\n": "643\n",
+                            "Damage per Hit\n": "771.6\n",
+                            "Hitpoints\n": "12,100\n",
+                            "Health Recovery\n": "2,950\n",
+                            "Upgrade Cost\n": "380,000\n",
+                            "Upgrade Time\n": "8d\n",
+                            "Hero Hall Level Required\n": "11\n"
+                        }
+                        ]
+                },
+                queen: {
+                    name: "Archer Queen",
+                    data: [
+  {
+    "Level\n": "Level\n",
+    "Damage per Second\n": "Damage per Second\n",
+    "Damage per Hit\n": "Damage per Hit\n",
+    "Hitpoints\n": "Hitpoints\n",
+    "Health Recovery\n": "Health Recovery\n",
+    "Upgrade Cost\n": "Upgrade Cost\n",
+    "Upgrade Time\n": "Upgrade Time\n",
+    "Hero Hall Level Required\n": "Hero Hall Level Required\n"
+  },
+  {
+    "Level\n": "1\n",
+    "Damage per Second\n": "136\n",
+    "Damage per Hit\n": "102\n",
+    "Hitpoints\n": "580\n",
+    "Health Recovery\n": "115\n",
+    "Upgrade Cost\n": "N/A\n",
+    "Upgrade Time\n": "N/A\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "2\n",
+    "Damage per Second\n": "139\n",
+    "Damage per Hit\n": "104.25\n",
+    "Hitpoints\n": "592\n",
+    "Health Recovery\n": "115\n",
+    "Upgrade Cost\n": "5,000\n",
+    "Upgrade Time\n": "2h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "3\n",
+    "Damage per Second\n": "143\n",
+    "Damage per Hit\n": "107.25\n",
+    "Hitpoints\n": "604\n",
+    "Health Recovery\n": "115\n",
+    "Upgrade Cost\n": "5,500\n",
+    "Upgrade Time\n": "4h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "4\n",
+    "Damage per Second\n": "146\n",
+    "Damage per Hit\n": "109.5\n",
+    "Hitpoints\n": "617\n",
+    "Health Recovery\n": "115\n",
+    "Upgrade Cost\n": "6,000\n",
+    "Upgrade Time\n": "8h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "5\n",
+    "Damage per Second\n": "150\n",
+    "Damage per Hit\n": "112.5\n",
+    "Hitpoints\n": "630\n",
+    "Health Recovery\n": "130\n",
+    "Upgrade Cost\n": "6,500\n",
+    "Upgrade Time\n": "10h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "6\n",
+    "Damage per Second\n": "154\n",
+    "Damage per Hit\n": "115.5\n",
+    "Hitpoints\n": "643\n",
+    "Health Recovery\n": "130\n",
+    "Upgrade Cost\n": "7,000\n",
+    "Upgrade Time\n": "12h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "7\n",
+    "Damage per Second\n": "157\n",
+    "Damage per Hit\n": "117.75\n",
+    "Hitpoints\n": "657\n",
+    "Health Recovery\n": "130\n",
+    "Upgrade Cost\n": "7,500\n",
+    "Upgrade Time\n": "14h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "8\n",
+    "Damage per Second\n": "162\n",
+    "Damage per Hit\n": "121.5\n",
+    "Hitpoints\n": "670\n",
+    "Health Recovery\n": "130\n",
+    "Upgrade Cost\n": "8,000\n",
+    "Upgrade Time\n": "16h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "9\n",
+    "Damage per Second\n": "165\n",
+    "Damage per Hit\n": "123.75\n",
+    "Hitpoints\n": "685\n",
+    "Health Recovery\n": "130\n",
+    "Upgrade Cost\n": "8,500\n",
+    "Upgrade Time\n": "18h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "10\n",
+    "Damage per Second\n": "169\n",
+    "Damage per Hit\n": "126.75\n",
+    "Hitpoints\n": "699\n",
+    "Health Recovery\n": "145\n",
+    "Upgrade Cost\n": "10,000\n",
+    "Upgrade Time\n": "20h\n",
+    "Hero Hall Level Required\n": "2\n"
+  },
+  {
+    "Level\n": "11\n",
+    "Damage per Second\n": "173\n",
+    "Damage per Hit\n": "129.75\n",
+    "Hitpoints\n": "714\n",
+    "Health Recovery\n": "145\n",
+    "Upgrade Cost\n": "10,500\n",
+    "Upgrade Time\n": "22h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "12\n",
+    "Damage per Second\n": "178\n",
+    "Damage per Hit\n": "133.5\n",
+    "Hitpoints\n": "729\n",
+    "Health Recovery\n": "145\n",
+    "Upgrade Cost\n": "11,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "13\n",
+    "Damage per Second\n": "183\n",
+    "Damage per Hit\n": "137.25\n",
+    "Hitpoints\n": "744\n",
+    "Health Recovery\n": "145\n",
+    "Upgrade Cost\n": "11,500\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "14\n",
+    "Damage per Second\n": "187\n",
+    "Damage per Hit\n": "140.25\n",
+    "Hitpoints\n": "759\n",
+    "Health Recovery\n": "145\n",
+    "Upgrade Cost\n": "12,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "15\n",
+    "Damage per Second\n": "192\n",
+    "Damage per Hit\n": "144\n",
+    "Hitpoints\n": "775\n",
+    "Health Recovery\n": "160\n",
+    "Upgrade Cost\n": "12,500\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "16\n",
+    "Damage per Second\n": "196\n",
+    "Damage per Hit\n": "147\n",
+    "Hitpoints\n": "792\n",
+    "Health Recovery\n": "160\n",
+    "Upgrade Cost\n": "13,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "17\n",
+    "Damage per Second\n": "201\n",
+    "Damage per Hit\n": "150.75\n",
+    "Hitpoints\n": "808\n",
+    "Health Recovery\n": "160\n",
+    "Upgrade Cost\n": "13,500\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "18\n",
+    "Damage per Second\n": "207\n",
+    "Damage per Hit\n": "155.25\n",
+    "Hitpoints\n": "826\n",
+    "Health Recovery\n": "160\n",
+    "Upgrade Cost\n": "14,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "19\n",
+    "Damage per Second\n": "212\n",
+    "Damage per Hit\n": "159\n",
+    "Hitpoints\n": "842\n",
+    "Health Recovery\n": "160\n",
+    "Upgrade Cost\n": "14,500\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "20\n",
+    "Damage per Second\n": "217\n",
+    "Damage per Hit\n": "162.75\n",
+    "Hitpoints\n": "861\n",
+    "Health Recovery\n": "175\n",
+    "Upgrade Cost\n": "15,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "21\n",
+    "Damage per Second\n": "223\n",
+    "Damage per Hit\n": "167.25\n",
+    "Hitpoints\n": "878\n",
+    "Health Recovery\n": "175\n",
+    "Upgrade Cost\n": "17,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "22\n",
+    "Damage per Second\n": "228\n",
+    "Damage per Hit\n": "171\n",
+    "Hitpoints\n": "897\n",
+    "Health Recovery\n": "175\n",
+    "Upgrade Cost\n": "19,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "23\n",
+    "Damage per Second\n": "234\n",
+    "Damage per Hit\n": "175.5\n",
+    "Hitpoints\n": "916\n",
+    "Health Recovery\n": "175\n",
+    "Upgrade Cost\n": "21,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "24\n",
+    "Damage per Second\n": "240\n",
+    "Damage per Hit\n": "180\n",
+    "Hitpoints\n": "935\n",
+    "Health Recovery\n": "175\n",
+    "Upgrade Cost\n": "23,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "25\n",
+    "Damage per Second\n": "246\n",
+    "Damage per Hit\n": "184.5\n",
+    "Hitpoints\n": "954\n",
+    "Health Recovery\n": "190\n",
+    "Upgrade Cost\n": "25,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "26\n",
+    "Damage per Second\n": "252\n",
+    "Damage per Hit\n": "189\n",
+    "Hitpoints\n": "974\n",
+    "Health Recovery\n": "190\n",
+    "Upgrade Cost\n": "27,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "27\n",
+    "Damage per Second\n": "258\n",
+    "Damage per Hit\n": "193.5\n",
+    "Hitpoints\n": "995\n",
+    "Health Recovery\n": "190\n",
+    "Upgrade Cost\n": "29,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "28\n",
+    "Damage per Second\n": "264\n",
+    "Damage per Hit\n": "198\n",
+    "Hitpoints\n": "1,016\n",
+    "Health Recovery\n": "190\n",
+    "Upgrade Cost\n": "31,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "29\n",
+    "Damage per Second\n": "271\n",
+    "Damage per Hit\n": "203.25\n",
+    "Hitpoints\n": "1,038\n",
+    "Health Recovery\n": "190\n",
+    "Upgrade Cost\n": "33,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "30\n",
+    "Damage per Second\n": "278\n",
+    "Damage per Hit\n": "208.5\n",
+    "Hitpoints\n": "1,059\n",
+    "Health Recovery\n": "205\n",
+    "Upgrade Cost\n": "35,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "31\n",
+    "Damage per Second\n": "285\n",
+    "Damage per Hit\n": "213.75\n",
+    "Hitpoints\n": "1,082\n",
+    "Health Recovery\n": "205\n",
+    "Upgrade Cost\n": "37,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "32\n",
+    "Damage per Second\n": "292\n",
+    "Damage per Hit\n": "219\n",
+    "Hitpoints\n": "1,104\n",
+    "Health Recovery\n": "205\n",
+    "Upgrade Cost\n": "39,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "33\n",
+    "Damage per Second\n": "299\n",
+    "Damage per Hit\n": "224.25\n",
+    "Hitpoints\n": "1,127\n",
+    "Health Recovery\n": "205\n",
+    "Upgrade Cost\n": "41,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "34\n",
+    "Damage per Second\n": "307\n",
+    "Damage per Hit\n": "230.25\n",
+    "Hitpoints\n": "1,151\n",
+    "Health Recovery\n": "205\n",
+    "Upgrade Cost\n": "43,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "35\n",
+    "Damage per Second\n": "315\n",
+    "Damage per Hit\n": "236.25\n",
+    "Hitpoints\n": "1,175\n",
+    "Health Recovery\n": "220\n",
+    "Upgrade Cost\n": "45,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "36\n",
+    "Damage per Second\n": "322\n",
+    "Damage per Hit\n": "241.5\n",
+    "Hitpoints\n": "1,200\n",
+    "Health Recovery\n": "220\n",
+    "Upgrade Cost\n": "47,000\n",
+    "Upgrade Time\n": "2d 12h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "37\n",
+    "Damage per Second\n": "331\n",
+    "Damage per Hit\n": "248.25\n",
+    "Hitpoints\n": "1,226\n",
+    "Health Recovery\n": "220\n",
+    "Upgrade Cost\n": "49,000\n",
+    "Upgrade Time\n": "2d 12h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "38\n",
+    "Damage per Second\n": "338\n",
+    "Damage per Hit\n": "253.5\n",
+    "Hitpoints\n": "1,251\n",
+    "Health Recovery\n": "220\n",
+    "Upgrade Cost\n": "51,000\n",
+    "Upgrade Time\n": "2d 12h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "39\n",
+    "Damage per Second\n": "347\n",
+    "Damage per Hit\n": "260.25\n",
+    "Hitpoints\n": "1,278\n",
+    "Health Recovery\n": "220\n",
+    "Upgrade Cost\n": "53,000\n",
+    "Upgrade Time\n": "2d 12h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "40\n",
+    "Damage per Second\n": "356\n",
+    "Damage per Hit\n": "267\n",
+    "Hitpoints\n": "1,304\n",
+    "Health Recovery\n": "235\n",
+    "Upgrade Cost\n": "55,000\n",
+    "Upgrade Time\n": "2d 12h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "41\n",
+    "Damage per Second\n": "365\n",
+    "Damage per Hit\n": "273.75\n",
+    "Hitpoints\n": "1,331\n",
+    "Health Recovery\n": "235\n",
+    "Upgrade Cost\n": "58,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "42\n",
+    "Damage per Second\n": "374\n",
+    "Damage per Hit\n": "280.5\n",
+    "Hitpoints\n": "1,359\n",
+    "Health Recovery\n": "235\n",
+    "Upgrade Cost\n": "61,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "43\n",
+    "Damage per Second\n": "383\n",
+    "Damage per Hit\n": "287.25\n",
+    "Hitpoints\n": "1,388\n",
+    "Health Recovery\n": "235\n",
+    "Upgrade Cost\n": "64,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "44\n",
+    "Damage per Second\n": "393\n",
+    "Damage per Hit\n": "294.75\n",
+    "Hitpoints\n": "1,417\n",
+    "Health Recovery\n": "235\n",
+    "Upgrade Cost\n": "67,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "45\n",
+    "Damage per Second\n": "403\n",
+    "Damage per Hit\n": "302.25\n",
+    "Hitpoints\n": "1,447\n",
+    "Health Recovery\n": "250\n",
+    "Upgrade Cost\n": "70,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "46\n",
+    "Damage per Second\n": "413\n",
+    "Damage per Hit\n": "309.75\n",
+    "Hitpoints\n": "1,478\n",
+    "Health Recovery\n": "250\n",
+    "Upgrade Cost\n": "73,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "47\n",
+    "Damage per Second\n": "423\n",
+    "Damage per Hit\n": "317.25\n",
+    "Hitpoints\n": "1,508\n",
+    "Health Recovery\n": "250\n",
+    "Upgrade Cost\n": "76,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "48\n",
+    "Damage per Second\n": "434\n",
+    "Damage per Hit\n": "325.5\n",
+    "Hitpoints\n": "1,540\n",
+    "Health Recovery\n": "250\n",
+    "Upgrade Cost\n": "79,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "49\n",
+    "Damage per Second\n": "445\n",
+    "Damage per Hit\n": "333.75\n",
+    "Hitpoints\n": "1,572\n",
+    "Health Recovery\n": "250\n",
+    "Upgrade Cost\n": "82,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "50\n",
+    "Damage per Second\n": "456\n",
+    "Damage per Hit\n": "342\n",
+    "Hitpoints\n": "1,606\n",
+    "Health Recovery\n": "265\n",
+    "Upgrade Cost\n": "85,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "51\n",
+    "Damage per Second\n": "465\n",
+    "Damage per Hit\n": "348.75\n",
+    "Hitpoints\n": "1,646\n",
+    "Health Recovery\n": "265\n",
+    "Upgrade Cost\n": "86,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "52\n",
+    "Damage per Second\n": "474\n",
+    "Damage per Hit\n": "355.5\n",
+    "Hitpoints\n": "1,688\n",
+    "Health Recovery\n": "265\n",
+    "Upgrade Cost\n": "87,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "53\n",
+    "Damage per Second\n": "485\n",
+    "Damage per Hit\n": "363.75\n",
+    "Hitpoints\n": "1,730\n",
+    "Health Recovery\n": "265\n",
+    "Upgrade Cost\n": "88,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "54\n",
+    "Damage per Second\n": "495\n",
+    "Damage per Hit\n": "371.25\n",
+    "Hitpoints\n": "1,774\n",
+    "Health Recovery\n": "265\n",
+    "Upgrade Cost\n": "89,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "55\n",
+    "Damage per Second\n": "505\n",
+    "Damage per Hit\n": "378.75\n",
+    "Hitpoints\n": "1,819\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "90,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "56\n",
+    "Damage per Second\n": "515\n",
+    "Damage per Hit\n": "386.25\n",
+    "Hitpoints\n": "1,865\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "93,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "57\n",
+    "Damage per Second\n": "526\n",
+    "Damage per Hit\n": "394.5\n",
+    "Hitpoints\n": "1,912\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "96,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "58\n",
+    "Damage per Second\n": "537\n",
+    "Damage per Hit\n": "402.75\n",
+    "Hitpoints\n": "1,960\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "99,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "59\n",
+    "Damage per Second\n": "548\n",
+    "Damage per Hit\n": "411\n",
+    "Hitpoints\n": "2,010\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "102,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "60\n",
+    "Damage per Second\n": "559\n",
+    "Damage per Hit\n": "419.25\n",
+    "Hitpoints\n": "2,060\n",
+    "Health Recovery\n": "295\n",
+    "Upgrade Cost\n": "105,000\n",
+    "Upgrade Time\n": "3d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "61\n",
+    "Damage per Second\n": "570\n",
+    "Damage per Hit\n": "427.5\n",
+    "Hitpoints\n": "2,111\n",
+    "Health Recovery\n": "295\n",
+    "Upgrade Cost\n": "107,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "62\n",
+    "Damage per Second\n": "581\n",
+    "Damage per Hit\n": "435.75\n",
+    "Hitpoints\n": "2,164\n",
+    "Health Recovery\n": "295\n",
+    "Upgrade Cost\n": "109,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "63\n",
+    "Damage per Second\n": "593\n",
+    "Damage per Hit\n": "444.75\n",
+    "Hitpoints\n": "2,218\n",
+    "Health Recovery\n": "295\n",
+    "Upgrade Cost\n": "111,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "64\n",
+    "Damage per Second\n": "605\n",
+    "Damage per Hit\n": "453.75\n",
+    "Hitpoints\n": "2,274\n",
+    "Health Recovery\n": "295\n",
+    "Upgrade Cost\n": "113,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "65\n",
+    "Damage per Second\n": "617\n",
+    "Damage per Hit\n": "462.75\n",
+    "Hitpoints\n": "2,330\n",
+    "Health Recovery\n": "310\n",
+    "Upgrade Cost\n": "115,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "66\n",
+    "Damage per Second\n": "628\n",
+    "Damage per Hit\n": "471\n",
+    "Hitpoints\n": "2,384\n",
+    "Health Recovery\n": "310\n",
+    "Upgrade Cost\n": "117,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "67\n",
+    "Damage per Second\n": "638\n",
+    "Damage per Hit\n": "478.5\n",
+    "Hitpoints\n": "2,432\n",
+    "Health Recovery\n": "310\n",
+    "Upgrade Cost\n": "119,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "68\n",
+    "Damage per Second\n": "648\n",
+    "Damage per Hit\n": "486\n",
+    "Hitpoints\n": "2,476\n",
+    "Health Recovery\n": "310\n",
+    "Upgrade Cost\n": "121,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "69\n",
+    "Damage per Second\n": "656\n",
+    "Damage per Hit\n": "492\n",
+    "Hitpoints\n": "2,516\n",
+    "Health Recovery\n": "310\n",
+    "Upgrade Cost\n": "123,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "70\n",
+    "Damage per Second\n": "664\n",
+    "Damage per Hit\n": "498\n",
+    "Hitpoints\n": "2,552\n",
+    "Health Recovery\n": "325\n",
+    "Upgrade Cost\n": "125,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "71\n",
+    "Damage per Second\n": "671\n",
+    "Damage per Hit\n": "503.25\n",
+    "Hitpoints\n": "2,584\n",
+    "Health Recovery\n": "325\n",
+    "Upgrade Cost\n": "130,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "72\n",
+    "Damage per Second\n": "677\n",
+    "Damage per Hit\n": "507.75\n",
+    "Hitpoints\n": "2,616\n",
+    "Health Recovery\n": "325\n",
+    "Upgrade Cost\n": "135,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "73\n",
+    "Damage per Second\n": "682\n",
+    "Damage per Hit\n": "511.5\n",
+    "Hitpoints\n": "2,648\n",
+    "Health Recovery\n": "325\n",
+    "Upgrade Cost\n": "140,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "74\n",
+    "Damage per Second\n": "687\n",
+    "Damage per Hit\n": "515.25\n",
+    "Hitpoints\n": "2,680\n",
+    "Health Recovery\n": "325\n",
+    "Upgrade Cost\n": "145,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "75\n",
+    "Damage per Second\n": "692\n",
+    "Damage per Hit\n": "519\n",
+    "Hitpoints\n": "2,712\n",
+    "Health Recovery\n": "340\n",
+    "Upgrade Cost\n": "150,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "76\n",
+    "Damage per Second\n": "697\n",
+    "Damage per Hit\n": "522.75\n",
+    "Hitpoints\n": "2,740\n",
+    "Health Recovery\n": "340\n",
+    "Upgrade Cost\n": "155,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "77\n",
+    "Damage per Second\n": "701\n",
+    "Damage per Hit\n": "525.75\n",
+    "Hitpoints\n": "2,768\n",
+    "Health Recovery\n": "340\n",
+    "Upgrade Cost\n": "160,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "78\n",
+    "Damage per Second\n": "706\n",
+    "Damage per Hit\n": "529.5\n",
+    "Hitpoints\n": "2,796\n",
+    "Health Recovery\n": "340\n",
+    "Upgrade Cost\n": "165,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "79\n",
+    "Damage per Second\n": "710\n",
+    "Damage per Hit\n": "532.5\n",
+    "Hitpoints\n": "2,824\n",
+    "Health Recovery\n": "340\n",
+    "Upgrade Cost\n": "170,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "80\n",
+    "Damage per Second\n": "714\n",
+    "Damage per Hit\n": "535.5\n",
+    "Hitpoints\n": "2,852\n",
+    "Health Recovery\n": "355\n",
+    "Upgrade Cost\n": "175,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "81\n",
+    "Damage per Second\n": "717\n",
+    "Damage per Hit\n": "537.75\n",
+    "Hitpoints\n": "2,880\n",
+    "Health Recovery\n": "355\n",
+    "Upgrade Cost\n": "180,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "82\n",
+    "Damage per Second\n": "721\n",
+    "Damage per Hit\n": "540.75\n",
+    "Hitpoints\n": "2,904\n",
+    "Health Recovery\n": "355\n",
+    "Upgrade Cost\n": "190,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "83\n",
+    "Damage per Second\n": "724\n",
+    "Damage per Hit\n": "543\n",
+    "Hitpoints\n": "2,928\n",
+    "Health Recovery\n": "355\n",
+    "Upgrade Cost\n": "200,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "84\n",
+    "Damage per Second\n": "728\n",
+    "Damage per Hit\n": "546\n",
+    "Hitpoints\n": "2,952\n",
+    "Health Recovery\n": "355\n",
+    "Upgrade Cost\n": "210,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "85\n",
+    "Damage per Second\n": "731\n",
+    "Damage per Hit\n": "548.25\n",
+    "Hitpoints\n": "2,976\n",
+    "Health Recovery\n": "370\n",
+    "Upgrade Cost\n": "220,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "86\n",
+    "Damage per Second\n": "734\n",
+    "Damage per Hit\n": "550.5\n",
+    "Hitpoints\n": "3,000\n",
+    "Health Recovery\n": "370\n",
+    "Upgrade Cost\n": "230,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "87\n",
+    "Damage per Second\n": "738\n",
+    "Damage per Hit\n": "553.5\n",
+    "Hitpoints\n": "3,024\n",
+    "Health Recovery\n": "370\n",
+    "Upgrade Cost\n": "240,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "88\n",
+    "Damage per Second\n": "741\n",
+    "Damage per Hit\n": "555.75\n",
+    "Hitpoints\n": "3,048\n",
+    "Health Recovery\n": "370\n",
+    "Upgrade Cost\n": "250,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "89\n",
+    "Damage per Second\n": "745\n",
+    "Damage per Hit\n": "558.75\n",
+    "Hitpoints\n": "3,072\n",
+    "Health Recovery\n": "370\n",
+    "Upgrade Cost\n": "260,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "90\n",
+    "Damage per Second\n": "748\n",
+    "Damage per Hit\n": "561\n",
+    "Hitpoints\n": "3,096\n",
+    "Health Recovery\n": "385\n",
+    "Upgrade Cost\n": "270,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "91\n",
+    "Damage per Second\n": "751\n",
+    "Damage per Hit\n": "563.25\n",
+    "Hitpoints\n": "3,120\n",
+    "Health Recovery\n": "385\n",
+    "Upgrade Cost\n": "280,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "92\n",
+    "Damage per Second\n": "755\n",
+    "Damage per Hit\n": "566.25\n",
+    "Hitpoints\n": "3,144\n",
+    "Health Recovery\n": "385\n",
+    "Upgrade Cost\n": "290,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "93\n",
+    "Damage per Second\n": "758\n",
+    "Damage per Hit\n": "568.5\n",
+    "Hitpoints\n": "3,168\n",
+    "Health Recovery\n": "385\n",
+    "Upgrade Cost\n": "300,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "94\n",
+    "Damage per Second\n": "762\n",
+    "Damage per Hit\n": "571.5\n",
+    "Hitpoints\n": "3,192\n",
+    "Health Recovery\n": "385\n",
+    "Upgrade Cost\n": "310,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "95\n",
+    "Damage per Second\n": "765\n",
+    "Damage per Hit\n": "573.75\n",
+    "Hitpoints\n": "3,216\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "320,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "96\n",
+    "Damage per Second\n": "768\n",
+    "Damage per Hit\n": "576\n",
+    "Hitpoints\n": "3,240\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "340,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "97\n",
+    "Damage per Second\n": "771\n",
+    "Damage per Hit\n": "578.25\n",
+    "Hitpoints\n": "3,264\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "350,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "98\n",
+    "Damage per Second\n": "774\n",
+    "Damage per Hit\n": "580.5\n",
+    "Hitpoints\n": "3,288\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "360,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "99\n",
+    "Damage per Second\n": "777\n",
+    "Damage per Hit\n": "582.75\n",
+    "Hitpoints\n": "3,312\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "370,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "100\n",
+    "Damage per Second\n": "780\n",
+    "Damage per Hit\n": "585\n",
+    "Hitpoints\n": "3,336\n",
+    "Health Recovery\n": "415\n",
+    "Upgrade Cost\n": "380,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  }
+],
+                },
+                warden: {
+                    name: "Grand Warden",
+                    data: [
+  {
+    "Level\n": "Level\n",
+    "Damage per Second\n": "Damage per Second\n",
+    "Damage per Hit\n": "Damage per Hit\n",
+    "Hitpoints\n": "Hitpoints\n",
+    "Health Recovery \n": "Health Recovery \n",
+    "Upgrade Cost\n": "Upgrade Cost\n",
+    "Upgrade Time\n": "Upgrade Time\n",
+    "Hero Hall Level Required\n": "Hero Hall Level Required\n"
+  },
+  {
+    "Level\n": "1\n",
+    "Damage per Second\n": "43\n",
+    "Damage per Hit\n": "77.4\n",
+    "Hitpoints\n": "850\n",
+    "Health Recovery \n": "90\n",
+    "Upgrade Cost\n": "1,000,000\n",
+    "Upgrade Time\n": "N/A\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "2\n",
+    "Damage per Second\n": "44\n",
+    "Damage per Hit\n": "79.2\n",
+    "Hitpoints\n": "868\n",
+    "Health Recovery \n": "90\n",
+    "Upgrade Cost\n": "1,000,000\n",
+    "Upgrade Time\n": "2h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "3\n",
+    "Damage per Second\n": "46\n",
+    "Damage per Hit\n": "82.8\n",
+    "Hitpoints\n": "886\n",
+    "Health Recovery \n": "90\n",
+    "Upgrade Cost\n": "1,100,000\n",
+    "Upgrade Time\n": "4h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "4\n",
+    "Damage per Second\n": "48\n",
+    "Damage per Hit\n": "86.4\n",
+    "Hitpoints\n": "904\n",
+    "Health Recovery \n": "90\n",
+    "Upgrade Cost\n": "1,200,000\n",
+    "Upgrade Time\n": "8h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "5\n",
+    "Damage per Second\n": "49\n",
+    "Damage per Hit\n": "88.2\n",
+    "Hitpoints\n": "923\n",
+    "Health Recovery \n": "97\n",
+    "Upgrade Cost\n": "1,400,000\n",
+    "Upgrade Time\n": "10h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "6\n",
+    "Damage per Second\n": "51\n",
+    "Damage per Hit\n": "91.8\n",
+    "Hitpoints\n": "942\n",
+    "Health Recovery \n": "97\n",
+    "Upgrade Cost\n": "1,500,000\n",
+    "Upgrade Time\n": "12h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "7\n",
+    "Damage per Second\n": "54\n",
+    "Damage per Hit\n": "97.2\n",
+    "Hitpoints\n": "961\n",
+    "Health Recovery \n": "97\n",
+    "Upgrade Cost\n": "1,700,000\n",
+    "Upgrade Time\n": "14h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "8\n",
+    "Damage per Second\n": "56\n",
+    "Damage per Hit\n": "100.8\n",
+    "Hitpoints\n": "982\n",
+    "Health Recovery \n": "97\n",
+    "Upgrade Cost\n": "1,800,000\n",
+    "Upgrade Time\n": "16h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "9\n",
+    "Damage per Second\n": "59\n",
+    "Damage per Hit\n": "106.2\n",
+    "Hitpoints\n": "1,003\n",
+    "Health Recovery \n": "97\n",
+    "Upgrade Cost\n": "2,000,000\n",
+    "Upgrade Time\n": "18h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "10\n",
+    "Damage per Second\n": "61\n",
+    "Damage per Hit\n": "109.8\n",
+    "Hitpoints\n": "1,025\n",
+    "Health Recovery \n": "109\n",
+    "Upgrade Cost\n": "2,300,000\n",
+    "Upgrade Time\n": "20h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "11\n",
+    "Damage per Second\n": "64\n",
+    "Damage per Hit\n": "115.2\n",
+    "Hitpoints\n": "1,048\n",
+    "Health Recovery \n": "109\n",
+    "Upgrade Cost\n": "2,700,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "12\n",
+    "Damage per Second\n": "66\n",
+    "Damage per Hit\n": "118.8\n",
+    "Hitpoints\n": "1,072\n",
+    "Health Recovery \n": "109\n",
+    "Upgrade Cost\n": "3,000,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "13\n",
+    "Damage per Second\n": "70\n",
+    "Damage per Hit\n": "126\n",
+    "Hitpoints\n": "1,097\n",
+    "Health Recovery \n": "109\n",
+    "Upgrade Cost\n": "3,400,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "14\n",
+    "Damage per Second\n": "73\n",
+    "Damage per Hit\n": "131.4\n",
+    "Hitpoints\n": "1,122\n",
+    "Health Recovery \n": "109\n",
+    "Upgrade Cost\n": "3,700,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "15\n",
+    "Damage per Second\n": "77\n",
+    "Damage per Hit\n": "138.6\n",
+    "Hitpoints\n": "1,148\n",
+    "Health Recovery \n": "122\n",
+    "Upgrade Cost\n": "4,100,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "16\n",
+    "Damage per Second\n": "80\n",
+    "Damage per Hit\n": "144\n",
+    "Hitpoints\n": "1,173\n",
+    "Health Recovery \n": "122\n",
+    "Upgrade Cost\n": "4,400,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "17\n",
+    "Damage per Second\n": "83\n",
+    "Damage per Hit\n": "149.4\n",
+    "Hitpoints\n": "1,199\n",
+    "Health Recovery \n": "122\n",
+    "Upgrade Cost\n": "4,800,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "18\n",
+    "Damage per Second\n": "87\n",
+    "Damage per Hit\n": "156.6\n",
+    "Hitpoints\n": "1,224\n",
+    "Health Recovery \n": "122\n",
+    "Upgrade Cost\n": "5,100,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "19\n",
+    "Damage per Second\n": "90\n",
+    "Damage per Hit\n": "162\n",
+    "Hitpoints\n": "1,250\n",
+    "Health Recovery \n": "122\n",
+    "Upgrade Cost\n": "5,500,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "20\n",
+    "Damage per Second\n": "94\n",
+    "Damage per Hit\n": "169.2\n",
+    "Hitpoints\n": "1,275\n",
+    "Health Recovery \n": "135\n",
+    "Upgrade Cost\n": "6,000,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "21\n",
+    "Damage per Second\n": "98\n",
+    "Damage per Hit\n": "176.4\n",
+    "Hitpoints\n": "1,301\n",
+    "Health Recovery \n": "135\n",
+    "Upgrade Cost\n": "6,500,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "22\n",
+    "Damage per Second\n": "102\n",
+    "Damage per Hit\n": "183.6\n",
+    "Hitpoints\n": "1,327\n",
+    "Health Recovery \n": "135\n",
+    "Upgrade Cost\n": "6,600,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "23\n",
+    "Damage per Second\n": "106\n",
+    "Damage per Hit\n": "190.8\n",
+    "Hitpoints\n": "1,354\n",
+    "Health Recovery \n": "135\n",
+    "Upgrade Cost\n": "6,700,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "24\n",
+    "Damage per Second\n": "111\n",
+    "Damage per Hit\n": "199.8\n",
+    "Hitpoints\n": "1,381\n",
+    "Health Recovery \n": "135\n",
+    "Upgrade Cost\n": "6,800,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "25\n",
+    "Damage per Second\n": "116\n",
+    "Damage per Hit\n": "208.8\n",
+    "Hitpoints\n": "1,409\n",
+    "Health Recovery \n": "149\n",
+    "Upgrade Cost\n": "6,900,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "26\n",
+    "Damage per Second\n": "121\n",
+    "Damage per Hit\n": "217.8\n",
+    "Hitpoints\n": "1,438\n",
+    "Health Recovery \n": "149\n",
+    "Upgrade Cost\n": "6,600,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "27\n",
+    "Damage per Second\n": "126\n",
+    "Damage per Hit\n": "226.8\n",
+    "Hitpoints\n": "1,467\n",
+    "Health Recovery \n": "149\n",
+    "Upgrade Cost\n": "6,700,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "28\n",
+    "Damage per Second\n": "131\n",
+    "Damage per Hit\n": "235.8\n",
+    "Hitpoints\n": "1,497\n",
+    "Health Recovery \n": "149\n",
+    "Upgrade Cost\n": "6,800,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "29\n",
+    "Damage per Second\n": "137\n",
+    "Damage per Hit\n": "246.6\n",
+    "Hitpoints\n": "1,527\n",
+    "Health Recovery \n": "149\n",
+    "Upgrade Cost\n": "6,900,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "30\n",
+    "Damage per Second\n": "143\n",
+    "Damage per Hit\n": "257.4\n",
+    "Hitpoints\n": "1,558\n",
+    "Health Recovery \n": "165\n",
+    "Upgrade Cost\n": "7,000,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "31\n",
+    "Damage per Second\n": "149\n",
+    "Damage per Hit\n": "268.2\n",
+    "Hitpoints\n": "1,590\n",
+    "Health Recovery \n": "165\n",
+    "Upgrade Cost\n": "7,100,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "32\n",
+    "Damage per Second\n": "155\n",
+    "Damage per Hit\n": "279\n",
+    "Hitpoints\n": "1,622\n",
+    "Health Recovery \n": "165\n",
+    "Upgrade Cost\n": "7,200,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "33\n",
+    "Damage per Second\n": "162\n",
+    "Damage per Hit\n": "291.6\n",
+    "Hitpoints\n": "1,655\n",
+    "Health Recovery \n": "165\n",
+    "Upgrade Cost\n": "7,300,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "34\n",
+    "Damage per Second\n": "168\n",
+    "Damage per Hit\n": "302.4\n",
+    "Hitpoints\n": "1,688\n",
+    "Health Recovery \n": "165\n",
+    "Upgrade Cost\n": "7,400,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "35\n",
+    "Damage per Second\n": "175\n",
+    "Damage per Hit\n": "315\n",
+    "Hitpoints\n": "1,722\n",
+    "Health Recovery \n": "182\n",
+    "Upgrade Cost\n": "7,500,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "36\n",
+    "Damage per Second\n": "183\n",
+    "Damage per Hit\n": "329.4\n",
+    "Hitpoints\n": "1,757\n",
+    "Health Recovery \n": "182\n",
+    "Upgrade Cost\n": "7,600,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "37\n",
+    "Damage per Second\n": "190\n",
+    "Damage per Hit\n": "342\n",
+    "Hitpoints\n": "1,793\n",
+    "Health Recovery \n": "182\n",
+    "Upgrade Cost\n": "7,700,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "38\n",
+    "Damage per Second\n": "198\n",
+    "Damage per Hit\n": "356.4\n",
+    "Hitpoints\n": "1,829\n",
+    "Health Recovery \n": "182\n",
+    "Upgrade Cost\n": "7,800,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "39\n",
+    "Damage per Second\n": "207\n",
+    "Damage per Hit\n": "372.6\n",
+    "Hitpoints\n": "1,867\n",
+    "Health Recovery \n": "182\n",
+    "Upgrade Cost\n": "7,900,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "40\n",
+    "Damage per Second\n": "215\n",
+    "Damage per Hit\n": "387\n",
+    "Hitpoints\n": "1,904\n",
+    "Health Recovery \n": "202\n",
+    "Upgrade Cost\n": "8,000,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "41\n",
+    "Damage per Second\n": "221\n",
+    "Damage per Hit\n": "397.8\n",
+    "Hitpoints\n": "1,921\n",
+    "Health Recovery \n": "202\n",
+    "Upgrade Cost\n": "8,300,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "42\n",
+    "Damage per Second\n": "226\n",
+    "Damage per Hit\n": "406.8\n",
+    "Hitpoints\n": "1,938\n",
+    "Health Recovery \n": "202\n",
+    "Upgrade Cost\n": "8,600,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "43\n",
+    "Damage per Second\n": "230\n",
+    "Damage per Hit\n": "414\n",
+    "Hitpoints\n": "1,955\n",
+    "Health Recovery \n": "202\n",
+    "Upgrade Cost\n": "8,900,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "44\n",
+    "Damage per Second\n": "234\n",
+    "Damage per Hit\n": "421.2\n",
+    "Hitpoints\n": "1,972\n",
+    "Health Recovery \n": "202\n",
+    "Upgrade Cost\n": "9,200,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "45\n",
+    "Damage per Second\n": "237\n",
+    "Damage per Hit\n": "426.6\n",
+    "Hitpoints\n": "1,989\n",
+    "Health Recovery \n": "211\n",
+    "Upgrade Cost\n": "9,500,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "46\n",
+    "Damage per Second\n": "241\n",
+    "Damage per Hit\n": "433.8\n",
+    "Hitpoints\n": "2,006\n",
+    "Health Recovery \n": "211\n",
+    "Upgrade Cost\n": "9,800,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "47\n",
+    "Damage per Second\n": "244\n",
+    "Damage per Hit\n": "439.2\n",
+    "Hitpoints\n": "2,023\n",
+    "Health Recovery \n": "211\n",
+    "Upgrade Cost\n": "10,100,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "48\n",
+    "Damage per Second\n": "247\n",
+    "Damage per Hit\n": "444.6\n",
+    "Hitpoints\n": "2,040\n",
+    "Health Recovery \n": "211\n",
+    "Upgrade Cost\n": "10,400,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "49\n",
+    "Damage per Second\n": "251\n",
+    "Damage per Hit\n": "451.8\n",
+    "Hitpoints\n": "2,057\n",
+    "Health Recovery \n": "211\n",
+    "Upgrade Cost\n": "10,700,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "50\n",
+    "Damage per Second\n": "254\n",
+    "Damage per Hit\n": "457.2\n",
+    "Hitpoints\n": "2,074\n",
+    "Health Recovery \n": "220\n",
+    "Upgrade Cost\n": "11,000,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "51\n",
+    "Damage per Second\n": "258\n",
+    "Damage per Hit\n": "464.4\n",
+    "Hitpoints\n": "2,091\n",
+    "Health Recovery \n": "220\n",
+    "Upgrade Cost\n": "11,400,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "52\n",
+    "Damage per Second\n": "261\n",
+    "Damage per Hit\n": "469.8\n",
+    "Hitpoints\n": "2,108\n",
+    "Health Recovery \n": "220\n",
+    "Upgrade Cost\n": "11,800,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "53\n",
+    "Damage per Second\n": "264\n",
+    "Damage per Hit\n": "475.2\n",
+    "Hitpoints\n": "2,125\n",
+    "Health Recovery \n": "220\n",
+    "Upgrade Cost\n": "12,200,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "54\n",
+    "Damage per Second\n": "268\n",
+    "Damage per Hit\n": "482.4\n",
+    "Hitpoints\n": "2,142\n",
+    "Health Recovery \n": "220\n",
+    "Upgrade Cost\n": "12,600,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "55\n",
+    "Damage per Second\n": "271\n",
+    "Damage per Hit\n": "487.8\n",
+    "Hitpoints\n": "2,159\n",
+    "Health Recovery \n": "229\n",
+    "Upgrade Cost\n": "13,000,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "56\n",
+    "Damage per Second\n": "274\n",
+    "Damage per Hit\n": "493.2\n",
+    "Hitpoints\n": "2,176\n",
+    "Health Recovery \n": "229\n",
+    "Upgrade Cost\n": "13,400,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "57\n",
+    "Damage per Second\n": "276\n",
+    "Damage per Hit\n": "496.8\n",
+    "Hitpoints\n": "2,193\n",
+    "Health Recovery \n": "229\n",
+    "Upgrade Cost\n": "13,800,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "58\n",
+    "Damage per Second\n": "279\n",
+    "Damage per Hit\n": "502.2\n",
+    "Hitpoints\n": "2,210\n",
+    "Health Recovery \n": "229\n",
+    "Upgrade Cost\n": "14,200,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "59\n",
+    "Damage per Second\n": "281\n",
+    "Damage per Hit\n": "505.8\n",
+    "Hitpoints\n": "2,227\n",
+    "Health Recovery \n": "229\n",
+    "Upgrade Cost\n": "14,600,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "60\n",
+    "Damage per Second\n": "284\n",
+    "Damage per Hit\n": "511.2\n",
+    "Hitpoints\n": "2,244\n",
+    "Health Recovery \n": "238\n",
+    "Upgrade Cost\n": "15,000,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "61\n",
+    "Damage per Second\n": "286\n",
+    "Damage per Hit\n": "514.8\n",
+    "Hitpoints\n": "2,261\n",
+    "Health Recovery \n": "238\n",
+    "Upgrade Cost\n": "15,500,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "62\n",
+    "Damage per Second\n": "289\n",
+    "Damage per Hit\n": "520.2\n",
+    "Hitpoints\n": "2,278\n",
+    "Health Recovery \n": "238\n",
+    "Upgrade Cost\n": "16,000,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "63\n",
+    "Damage per Second\n": "292\n",
+    "Damage per Hit\n": "525.6\n",
+    "Hitpoints\n": "2,295\n",
+    "Health Recovery \n": "238\n",
+    "Upgrade Cost\n": "16,500,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "64\n",
+    "Damage per Second\n": "294\n",
+    "Damage per Hit\n": "529.2\n",
+    "Hitpoints\n": "2,312\n",
+    "Health Recovery \n": "238\n",
+    "Upgrade Cost\n": "17,000,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "65\n",
+    "Damage per Second\n": "297\n",
+    "Damage per Hit\n": "534.6\n",
+    "Hitpoints\n": "2,329\n",
+    "Health Recovery \n": "247\n",
+    "Upgrade Cost\n": "17,500,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "66\n",
+    "Damage per Second\n": "299\n",
+    "Damage per Hit\n": "538.2\n",
+    "Hitpoints\n": "2,346\n",
+    "Health Recovery \n": "247\n",
+    "Upgrade Cost\n": "18,000,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "67\n",
+    "Damage per Second\n": "302\n",
+    "Damage per Hit\n": "543.6\n",
+    "Hitpoints\n": "2,363\n",
+    "Health Recovery \n": "247\n",
+    "Upgrade Cost\n": "18,500,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "68\n",
+    "Damage per Second\n": "304\n",
+    "Damage per Hit\n": "547.2\n",
+    "Hitpoints\n": "2,380\n",
+    "Health Recovery \n": "247\n",
+    "Upgrade Cost\n": "19,000,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "69\n",
+    "Damage per Second\n": "307\n",
+    "Damage per Hit\n": "552.6\n",
+    "Hitpoints\n": "2,397\n",
+    "Health Recovery \n": "247\n",
+    "Upgrade Cost\n": "19,500,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "70\n",
+    "Damage per Second\n": "309\n",
+    "Damage per Hit\n": "556.2\n",
+    "Hitpoints\n": "2,414\n",
+    "Health Recovery \n": "256\n",
+    "Upgrade Cost\n": "20,000,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "71\n",
+    "Damage per Second\n": "312\n",
+    "Damage per Hit\n": "561.6\n",
+    "Hitpoints\n": "2,431\n",
+    "Health Recovery \n": "256\n",
+    "Upgrade Cost\n": "20,500,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "72\n",
+    "Damage per Second\n": "315\n",
+    "Damage per Hit\n": "567\n",
+    "Hitpoints\n": "2,448\n",
+    "Health Recovery \n": "256\n",
+    "Upgrade Cost\n": "21,000,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "73\n",
+    "Damage per Second\n": "318\n",
+    "Damage per Hit\n": "572.4\n",
+    "Hitpoints\n": "2,465\n",
+    "Health Recovery \n": "256\n",
+    "Upgrade Cost\n": "21,500,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "74\n",
+    "Damage per Second\n": "321\n",
+    "Damage per Hit\n": "577.8\n",
+    "Hitpoints\n": "2,482\n",
+    "Health Recovery \n": "256\n",
+    "Upgrade Cost\n": "22,000,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "75\n",
+    "Damage per Second\n": "324\n",
+    "Damage per Hit\n": "583.2\n",
+    "Hitpoints\n": "2,499\n",
+    "Health Recovery \n": "265\n",
+    "Upgrade Cost\n": "22,500,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  }
+],
+                },
+                prince: {
+                    name: "Minion Prince",
+                    data: [
+  {
+    "Level\n": "Level\n",
+    "Damage per Second\n": "Damage per Second\n",
+    "Damage per Hit\n": "Damage per Hit\n",
+    "Hitpoints\n": "Hitpoints\n",
+    "Health Recovery\n": "Health Recovery\n",
+    "Upgrade Cost\n": "Upgrade Cost\n",
+    "Upgrade Time\n": "Upgrade Time\n",
+    "Hero Hall Level Required\n": "Hero Hall Level Required\n"
+  },
+  {
+    "Level\n": "1\n",
+    "Damage per Second\n": "173\n",
+    "Damage per Hit\n": "147.05\n",
+    "Hitpoints\n": "1,200\n",
+    "Health Recovery\n": "200\n",
+    "Upgrade Cost\n": "N/A\n",
+    "Upgrade Time\n": "N/A\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "2\n",
+    "Damage per Second\n": "177\n",
+    "Damage per Hit\n": "150.45\n",
+    "Hitpoints\n": "1,242\n",
+    "Health Recovery\n": "200\n",
+    "Upgrade Cost\n": "5,000\n",
+    "Upgrade Time\n": "2h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "3\n",
+    "Damage per Second\n": "181\n",
+    "Damage per Hit\n": "153.85\n",
+    "Hitpoints\n": "1,284\n",
+    "Health Recovery\n": "200\n",
+    "Upgrade Cost\n": "5,500\n",
+    "Upgrade Time\n": "4h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "4\n",
+    "Damage per Second\n": "187\n",
+    "Damage per Hit\n": "158.95\n",
+    "Hitpoints\n": "1,326\n",
+    "Health Recovery\n": "200\n",
+    "Upgrade Cost\n": "6,000\n",
+    "Upgrade Time\n": "8h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "5\n",
+    "Damage per Second\n": "191\n",
+    "Damage per Hit\n": "162.35\n",
+    "Hitpoints\n": "1,368\n",
+    "Health Recovery\n": "240\n",
+    "Upgrade Cost\n": "6,500\n",
+    "Upgrade Time\n": "10h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "6\n",
+    "Damage per Second\n": "196\n",
+    "Damage per Hit\n": "166.6\n",
+    "Hitpoints\n": "1,410\n",
+    "Health Recovery\n": "240\n",
+    "Upgrade Cost\n": "7,000\n",
+    "Upgrade Time\n": "12h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "7\n",
+    "Damage per Second\n": "201\n",
+    "Damage per Hit\n": "170.85\n",
+    "Hitpoints\n": "1,452\n",
+    "Health Recovery\n": "240\n",
+    "Upgrade Cost\n": "7,500\n",
+    "Upgrade Time\n": "14h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "8\n",
+    "Damage per Second\n": "206\n",
+    "Damage per Hit\n": "175.1\n",
+    "Hitpoints\n": "1,494\n",
+    "Health Recovery\n": "240\n",
+    "Upgrade Cost\n": "8,000\n",
+    "Upgrade Time\n": "16h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "9\n",
+    "Damage per Second\n": "211\n",
+    "Damage per Hit\n": "179.35\n",
+    "Hitpoints\n": "1,536\n",
+    "Health Recovery\n": "240\n",
+    "Upgrade Cost\n": "8,500\n",
+    "Upgrade Time\n": "18h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "10\n",
+    "Damage per Second\n": "216\n",
+    "Damage per Hit\n": "183.6\n",
+    "Hitpoints\n": "1,578\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "10,000\n",
+    "Upgrade Time\n": "20h\n",
+    "Hero Hall Level Required\n": "3\n"
+  },
+  {
+    "Level\n": "11\n",
+    "Damage per Second\n": "222\n",
+    "Damage per Hit\n": "188.7\n",
+    "Hitpoints\n": "1,620\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "10,500\n",
+    "Upgrade Time\n": "22h\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "12\n",
+    "Damage per Second\n": "227\n",
+    "Damage per Hit\n": "192.95\n",
+    "Hitpoints\n": "1,662\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "11,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "13\n",
+    "Damage per Second\n": "233\n",
+    "Damage per Hit\n": "198.05\n",
+    "Hitpoints\n": "1,704\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "11,500\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "14\n",
+    "Damage per Second\n": "238\n",
+    "Damage per Hit\n": "202.3\n",
+    "Hitpoints\n": "1,746\n",
+    "Health Recovery\n": "280\n",
+    "Upgrade Cost\n": "12,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "15\n",
+    "Damage per Second\n": "244\n",
+    "Damage per Hit\n": "207.4\n",
+    "Hitpoints\n": "1,788\n",
+    "Health Recovery\n": "320\n",
+    "Upgrade Cost\n": "12,500\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "16\n",
+    "Damage per Second\n": "251\n",
+    "Damage per Hit\n": "213.35\n",
+    "Hitpoints\n": "1,830\n",
+    "Health Recovery\n": "320\n",
+    "Upgrade Cost\n": "13,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "17\n",
+    "Damage per Second\n": "257\n",
+    "Damage per Hit\n": "218.45\n",
+    "Hitpoints\n": "1,872\n",
+    "Health Recovery\n": "320\n",
+    "Upgrade Cost\n": "13,500\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "18\n",
+    "Damage per Second\n": "263\n",
+    "Damage per Hit\n": "223.55\n",
+    "Hitpoints\n": "1,914\n",
+    "Health Recovery\n": "320\n",
+    "Upgrade Cost\n": "14,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "19\n",
+    "Damage per Second\n": "270\n",
+    "Damage per Hit\n": "229.5\n",
+    "Hitpoints\n": "1,956\n",
+    "Health Recovery\n": "320\n",
+    "Upgrade Cost\n": "14,500\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "20\n",
+    "Damage per Second\n": "277\n",
+    "Damage per Hit\n": "235.45\n",
+    "Hitpoints\n": "1,998\n",
+    "Health Recovery\n": "360\n",
+    "Upgrade Cost\n": "15,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "4\n"
+  },
+  {
+    "Level\n": "21\n",
+    "Damage per Second\n": "284\n",
+    "Damage per Hit\n": "241.4\n",
+    "Hitpoints\n": "2,040\n",
+    "Health Recovery\n": "360\n",
+    "Upgrade Cost\n": "17,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "22\n",
+    "Damage per Second\n": "290\n",
+    "Damage per Hit\n": "246.5\n",
+    "Hitpoints\n": "2,082\n",
+    "Health Recovery\n": "175\n",
+    "Upgrade Cost\n": "19,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "23\n",
+    "Damage per Second\n": "298\n",
+    "Damage per Hit\n": "253.3\n",
+    "Hitpoints\n": "2,124\n",
+    "Health Recovery\n": "360\n",
+    "Upgrade Cost\n": "21,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "24\n",
+    "Damage per Second\n": "305\n",
+    "Damage per Hit\n": "259.25\n",
+    "Hitpoints\n": "2,166\n",
+    "Health Recovery\n": "360\n",
+    "Upgrade Cost\n": "23,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "25\n",
+    "Damage per Second\n": "313\n",
+    "Damage per Hit\n": "266.05\n",
+    "Hitpoints\n": "2,208\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "25,000\n",
+    "Upgrade Time\n": "1d\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "26\n",
+    "Damage per Second\n": "321\n",
+    "Damage per Hit\n": "272.85\n",
+    "Hitpoints\n": "2,250\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "27,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "27\n",
+    "Damage per Second\n": "329\n",
+    "Damage per Hit\n": "279.65\n",
+    "Hitpoints\n": "2,292\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "29,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "28\n",
+    "Damage per Second\n": "337\n",
+    "Damage per Hit\n": "286.45\n",
+    "Hitpoints\n": "2,334\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "31,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "29\n",
+    "Damage per Second\n": "345\n",
+    "Damage per Hit\n": "293.25\n",
+    "Hitpoints\n": "2,376\n",
+    "Health Recovery\n": "400\n",
+    "Upgrade Cost\n": "33,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "30\n",
+    "Damage per Second\n": "354\n",
+    "Damage per Hit\n": "300.9\n",
+    "Hitpoints\n": "2,418\n",
+    "Health Recovery\n": "440\n",
+    "Upgrade Cost\n": "35,000\n",
+    "Upgrade Time\n": "1d 12h\n",
+    "Hero Hall Level Required\n": "5\n"
+  },
+  {
+    "Level\n": "31\n",
+    "Damage per Second\n": "363\n",
+    "Damage per Hit\n": "308.55\n",
+    "Hitpoints\n": "2,460\n",
+    "Health Recovery\n": "440\n",
+    "Upgrade Cost\n": "36,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "32\n",
+    "Damage per Second\n": "372\n",
+    "Damage per Hit\n": "316.2\n",
+    "Hitpoints\n": "2,502\n",
+    "Health Recovery\n": "440\n",
+    "Upgrade Cost\n": "37,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "33\n",
+    "Damage per Second\n": "381\n",
+    "Damage per Hit\n": "323.85\n",
+    "Hitpoints\n": "2,544\n",
+    "Health Recovery\n": "440\n",
+    "Upgrade Cost\n": "38,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "34\n",
+    "Damage per Second\n": "391\n",
+    "Damage per Hit\n": "332.35\n",
+    "Hitpoints\n": "2,586\n",
+    "Health Recovery\n": "440\n",
+    "Upgrade Cost\n": "39,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "35\n",
+    "Damage per Second\n": "401\n",
+    "Damage per Hit\n": "340.85\n",
+    "Hitpoints\n": "2,628\n",
+    "Health Recovery\n": "480\n",
+    "Upgrade Cost\n": "40,000\n",
+    "Upgrade Time\n": "2d\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "36\n",
+    "Damage per Second\n": "411\n",
+    "Damage per Hit\n": "349.35\n",
+    "Hitpoints\n": "2,670\n",
+    "Health Recovery\n": "480\n",
+    "Upgrade Cost\n": "41,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "37\n",
+    "Damage per Second\n": "419\n",
+    "Damage per Hit\n": "356.15\n",
+    "Hitpoints\n": "2,712\n",
+    "Health Recovery\n": "480\n",
+    "Upgrade Cost\n": "42,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "38\n",
+    "Damage per Second\n": "427\n",
+    "Damage per Hit\n": "362.95\n",
+    "Hitpoints\n": "2,754\n",
+    "Health Recovery\n": "480\n",
+    "Upgrade Cost\n": "43,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "39\n",
+    "Damage per Second\n": "437\n",
+    "Damage per Hit\n": "371.45\n",
+    "Hitpoints\n": "2,796\n",
+    "Health Recovery\n": "480\n",
+    "Upgrade Cost\n": "44,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "40\n",
+    "Damage per Second\n": "446\n",
+    "Damage per Hit\n": "379.1\n",
+    "Hitpoints\n": "2,838\n",
+    "Health Recovery\n": "520\n",
+    "Upgrade Cost\n": "45,000\n",
+    "Upgrade Time\n": "2d 6h\n",
+    "Hero Hall Level Required\n": "6\n"
+  },
+  {
+    "Level\n": "41\n",
+    "Damage per Second\n": "455\n",
+    "Damage per Hit\n": "386.75\n",
+    "Hitpoints\n": "2,880\n",
+    "Health Recovery\n": "520\n",
+    "Upgrade Cost\n": "50,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "42\n",
+    "Damage per Second\n": "464\n",
+    "Damage per Hit\n": "394.4\n",
+    "Hitpoints\n": "2,922\n",
+    "Health Recovery\n": "520\n",
+    "Upgrade Cost\n": "55,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "43\n",
+    "Damage per Second\n": "474\n",
+    "Damage per Hit\n": "402.9\n",
+    "Hitpoints\n": "2,964\n",
+    "Health Recovery\n": "520\n",
+    "Upgrade Cost\n": "60,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "44\n",
+    "Damage per Second\n": "484\n",
+    "Damage per Hit\n": "411.4\n",
+    "Hitpoints\n": "3,006\n",
+    "Health Recovery\n": "520\n",
+    "Upgrade Cost\n": "65,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "45\n",
+    "Damage per Second\n": "494\n",
+    "Damage per Hit\n": "419.9\n",
+    "Hitpoints\n": "3,048\n",
+    "Health Recovery\n": "560\n",
+    "Upgrade Cost\n": "70,000\n",
+    "Upgrade Time\n": "3d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "46\n",
+    "Damage per Second\n": "504\n",
+    "Damage per Hit\n": "428.4\n",
+    "Hitpoints\n": "3,090\n",
+    "Health Recovery\n": "560\n",
+    "Upgrade Cost\n": "75,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "47\n",
+    "Damage per Second\n": "513\n",
+    "Damage per Hit\n": "436.05\n",
+    "Hitpoints\n": "3,132\n",
+    "Health Recovery\n": "560\n",
+    "Upgrade Cost\n": "80,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "48\n",
+    "Damage per Second\n": "523\n",
+    "Damage per Hit\n": "444.55\n",
+    "Hitpoints\n": "3,174\n",
+    "Health Recovery\n": "560\n",
+    "Upgrade Cost\n": "85,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "49\n",
+    "Damage per Second\n": "534\n",
+    "Damage per Hit\n": "453.9\n",
+    "Hitpoints\n": "3,216\n",
+    "Health Recovery\n": "560\n",
+    "Upgrade Cost\n": "90,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "50\n",
+    "Damage per Second\n": "545\n",
+    "Damage per Hit\n": "463.25\n",
+    "Hitpoints\n": "3,258\n",
+    "Health Recovery\n": "600\n",
+    "Upgrade Cost\n": "95,000\n",
+    "Upgrade Time\n": "4d\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "51\n",
+    "Damage per Second\n": "556\n",
+    "Damage per Hit\n": "472.6\n",
+    "Hitpoints\n": "3,300\n",
+    "Health Recovery\n": "600\n",
+    "Upgrade Cost\n": "100,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "52\n",
+    "Damage per Second\n": "566\n",
+    "Damage per Hit\n": "481.1\n",
+    "Hitpoints\n": "3,342\n",
+    "Health Recovery\n": "600\n",
+    "Upgrade Cost\n": "105,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "53\n",
+    "Damage per Second\n": "575\n",
+    "Damage per Hit\n": "488.75\n",
+    "Hitpoints\n": "3,384\n",
+    "Health Recovery\n": "600\n",
+    "Upgrade Cost\n": "110,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "54\n",
+    "Damage per Second\n": "584\n",
+    "Damage per Hit\n": "496.4\n",
+    "Hitpoints\n": "3,426\n",
+    "Health Recovery\n": "600\n",
+    "Upgrade Cost\n": "115,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "55\n",
+    "Damage per Second\n": "591\n",
+    "Damage per Hit\n": "502.35\n",
+    "Hitpoints\n": "3,468\n",
+    "Health Recovery\n": "650\n",
+    "Upgrade Cost\n": "120,000\n",
+    "Upgrade Time\n": "4d 12h\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "56\n",
+    "Damage per Second\n": "598\n",
+    "Damage per Hit\n": "508.3\n",
+    "Hitpoints\n": "3,510\n",
+    "Health Recovery\n": "650\n",
+    "Upgrade Cost\n": "125,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "57\n",
+    "Damage per Second\n": "604\n",
+    "Damage per Hit\n": "513.4\n",
+    "Hitpoints\n": "3,552\n",
+    "Health Recovery\n": "650\n",
+    "Upgrade Cost\n": "130,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "58\n",
+    "Damage per Second\n": "610\n",
+    "Damage per Hit\n": "518.5\n",
+    "Hitpoints\n": "3,594\n",
+    "Health Recovery\n": "650\n",
+    "Upgrade Cost\n": "135,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "59\n",
+    "Damage per Second\n": "614\n",
+    "Damage per Hit\n": "521.9\n",
+    "Hitpoints\n": "3,636\n",
+    "Health Recovery\n": "650\n",
+    "Upgrade Cost\n": "140,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "60\n",
+    "Damage per Second\n": "619\n",
+    "Damage per Hit\n": "526.15\n",
+    "Hitpoints\n": "3,678\n",
+    "Health Recovery\n": "700\n",
+    "Upgrade Cost\n": "145,000\n",
+    "Upgrade Time\n": "5d\n",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "61\n",
+    "Damage per Second\n": "623\n",
+    "Damage per Hit\n": "529.55\n",
+    "Hitpoints\n": "3,720\n",
+    "Health Recovery\n": "700\n",
+    "Upgrade Cost\n": "150,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "62\n",
+    "Damage per Second\n": "628\n",
+    "Damage per Hit\n": "533.8\n",
+    "Hitpoints\n": "3,762\n",
+    "Health Recovery\n": "700\n",
+    "Upgrade Cost\n": "155,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "63\n",
+    "Damage per Second\n": "631\n",
+    "Damage per Hit\n": "536.35\n",
+    "Hitpoints\n": "3,804\n",
+    "Health Recovery\n": "700\n",
+    "Upgrade Cost\n": "160,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "64\n",
+    "Damage per Second\n": "636\n",
+    "Damage per Hit\n": "540.6\n",
+    "Hitpoints\n": "3,846\n",
+    "Health Recovery\n": "700\n",
+    "Upgrade Cost\n": "165,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "65\n",
+    "Damage per Second\n": "639\n",
+    "Damage per Hit\n": "543.15\n",
+    "Hitpoints\n": "3,888\n",
+    "Health Recovery\n": "750\n",
+    "Upgrade Cost\n": "170,000\n",
+    "Upgrade Time\n": "6d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "66\n",
+    "Damage per Second\n": "643\n",
+    "Damage per Hit\n": "546.55\n",
+    "Hitpoints\n": "3,930\n",
+    "Health Recovery\n": "750\n",
+    "Upgrade Cost\n": "175,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "67\n",
+    "Damage per Second\n": "646\n",
+    "Damage per Hit\n": "549.1\n",
+    "Hitpoints\n": "3,972\n",
+    "Health Recovery\n": "750\n",
+    "Upgrade Cost\n": "180,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "68\n",
+    "Damage per Second\n": "649\n",
+    "Damage per Hit\n": "551.65\n",
+    "Hitpoints\n": "4,014\n",
+    "Health Recovery\n": "750\n",
+    "Upgrade Cost\n": "185,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "69\n",
+    "Damage per Second\n": "652\n",
+    "Damage per Hit\n": "554.2\n",
+    "Hitpoints\n": "4,056\n",
+    "Health Recovery\n": "750\n",
+    "Upgrade Cost\n": "190,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "70\n",
+    "Damage per Second\n": "656\n",
+    "Damage per Hit\n": "557.6\n",
+    "Hitpoints\n": "4,098\n",
+    "Health Recovery\n": "800\n",
+    "Upgrade Cost\n": "195,000\n",
+    "Upgrade Time\n": "7d\n",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "71\n",
+    "Damage per Second\n": "658\n",
+    "Damage per Hit\n": "559.3\n",
+    "Hitpoints\n": "4,161\n",
+    "Health Recovery\n": "800\n",
+    "Upgrade Cost\n": "200,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "72\n",
+    "Damage per Second\n": "661\n",
+    "Damage per Hit\n": "561.85\n",
+    "Hitpoints\n": "4,224\n",
+    "Health Recovery\n": "800\n",
+    "Upgrade Cost\n": "205,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "73\n",
+    "Damage per Second\n": "665\n",
+    "Damage per Hit\n": "565.25\n",
+    "Hitpoints\n": "4,287\n",
+    "Health Recovery\n": "800\n",
+    "Upgrade Cost\n": "210,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "74\n",
+    "Damage per Second\n": "670\n",
+    "Damage per Hit\n": "569.5\n",
+    "Hitpoints\n": "4,350\n",
+    "Health Recovery\n": "800\n",
+    "Upgrade Cost\n": "215,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "75\n",
+    "Damage per Second\n": "675\n",
+    "Damage per Hit\n": "573.75\n",
+    "Hitpoints\n": "4,413\n",
+    "Health Recovery\n": "850\n",
+    "Upgrade Cost\n": "230,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "76\n",
+    "Damage per Second\n": "680\n",
+    "Damage per Hit\n": "578\n",
+    "Hitpoints\n": "4,476\n",
+    "Health Recovery\n": "850\n",
+    "Upgrade Cost\n": "240,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "77\n",
+    "Damage per Second\n": "685\n",
+    "Damage per Hit\n": "582.25\n",
+    "Hitpoints\n": "4,539\n",
+    "Health Recovery\n": "850\n",
+    "Upgrade Cost\n": "250,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "78\n",
+    "Damage per Second\n": "690\n",
+    "Damage per Hit\n": "586.5\n",
+    "Hitpoints\n": "4,602\n",
+    "Health Recovery\n": "850\n",
+    "Upgrade Cost\n": "260,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "79\n",
+    "Damage per Second\n": "695\n",
+    "Damage per Hit\n": "590.75\n",
+    "Hitpoints\n": "4,665\n",
+    "Health Recovery\n": "850\n",
+    "Upgrade Cost\n": "270,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "80\n",
+    "Damage per Second\n": "700\n",
+    "Damage per Hit\n": "595\n",
+    "Hitpoints\n": "4,728\n",
+    "Health Recovery\n": "900\n",
+    "Upgrade Cost\n": "280,000\n",
+    "Upgrade Time\n": "7d 12h\n",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "81\n",
+    "Damage per Second\n": "705\n",
+    "Damage per Hit\n": "599.25\n",
+    "Hitpoints\n": "4,791\n",
+    "Health Recovery\n": "900\n",
+    "Upgrade Cost\n": "290,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "82\n",
+    "Damage per Second\n": "710\n",
+    "Damage per Hit\n": "603.5\n",
+    "Hitpoints\n": "4,854\n",
+    "Health Recovery\n": "900\n",
+    "Upgrade Cost\n": "300,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "83\n",
+    "Damage per Second\n": "715\n",
+    "Damage per Hit\n": "607.75\n",
+    "Hitpoints\n": "4,917\n",
+    "Health Recovery\n": "900\n",
+    "Upgrade Cost\n": "310,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "84\n",
+    "Damage per Second\n": "720\n",
+    "Damage per Hit\n": "612\n",
+    "Hitpoints\n": "4,980\n",
+    "Health Recovery\n": "900\n",
+    "Upgrade Cost\n": "320,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "85\n",
+    "Damage per Second\n": "725\n",
+    "Damage per Hit\n": "616.25\n",
+    "Hitpoints\n": "5,043\n",
+    "Health Recovery\n": "950\n",
+    "Upgrade Cost\n": "330,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "86\n",
+    "Damage per Second\n": "730\n",
+    "Damage per Hit\n": "620.5\n",
+    "Hitpoints\n": "5,106\n",
+    "Health Recovery\n": "950\n",
+    "Upgrade Cost\n": "340,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "87\n",
+    "Damage per Second\n": "735\n",
+    "Damage per Hit\n": "624.75\n",
+    "Hitpoints\n": "5,169\n",
+    "Health Recovery\n": "950\n",
+    "Upgrade Cost\n": "350,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "88\n",
+    "Damage per Second\n": "740\n",
+    "Damage per Hit\n": "629\n",
+    "Hitpoints\n": "5,232\n",
+    "Health Recovery\n": "950\n",
+    "Upgrade Cost\n": "360,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "89\n",
+    "Damage per Second\n": "745\n",
+    "Damage per Hit\n": "633.25\n",
+    "Hitpoints\n": "5,295\n",
+    "Health Recovery\n": "950\n",
+    "Upgrade Cost\n": "370,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "90\n",
+    "Damage per Second\n": "750\n",
+    "Damage per Hit\n": "637.5\n",
+    "Hitpoints\n": "5,358\n",
+    "Health Recovery\n": "1,000\n",
+    "Upgrade Cost\n": "380,000\n",
+    "Upgrade Time\n": "8d\n",
+    "Hero Hall Level Required\n": "11\n"
+  }
+],
+                },
+                champion: {
+                    name: "Royal Champion",
+                    data: [
+  {
+    "Level\n": "Level\n",
+    "Damage per Second\n": "Damage per Second\n",
+    "Damage per Hit\n": "Damage per Hit\n",
+    "Hitpoints\n": "Hitpoints\n",
+    "Health Recovery\n": "Health Recovery\n",
+    "Upgrade Cost\n": "Upgrade Cost\n",
+    "Upgrade Time\n": "Upgrade Time\n",
+    "Hero Hall Level Required\n": "Hero Hall Level Required\n"
+  },
+  {
+    "Level\n": "1\n",
+    "Damage per Second\n": "340",
+    "Damage per Hit\n": "408",
+    "Hitpoints\n": "2,508",
+    "Health Recovery\n": "400",
+    "Upgrade Cost\n": "N/A\n",
+    "Upgrade Time\n": "N/A\n",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "2\n",
+    "Damage per Second\n": "350",
+    "Damage per Hit\n": "420",
+    "Hitpoints\n": "2,550",
+    "Health Recovery\n": "400",
+    "Upgrade Cost\n": "10,000",
+    "Upgrade Time\n": "4h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "3\n",
+    "Damage per Second\n": "360",
+    "Damage per Hit\n": "432",
+    "Hitpoints\n": "2,593",
+    "Health Recovery\n": "400",
+    "Upgrade Cost\n": "15,000",
+    "Upgrade Time\n": "10h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "4\n",
+    "Damage per Second\n": "370",
+    "Damage per Hit\n": "444",
+    "Hitpoints\n": "2,635",
+    "Health Recovery\n": "400",
+    "Upgrade Cost\n": "20,000",
+    "Upgrade Time\n": "12h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "5\n",
+    "Damage per Second\n": "375",
+    "Damage per Hit\n": "450",
+    "Hitpoints\n": "2,678",
+    "Health Recovery\n": "500",
+    "Upgrade Cost\n": "25,000",
+    "Upgrade Time\n": "20h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "6\n",
+    "Damage per Second\n": "380",
+    "Damage per Hit\n": "456",
+    "Hitpoints\n": "2,720",
+    "Health Recovery\n": "500",
+    "Upgrade Cost\n": "30,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "7\n",
+    "Damage per Second\n": "385",
+    "Damage per Hit\n": "462",
+    "Hitpoints\n": "2,763",
+    "Health Recovery\n": "500",
+    "Upgrade Cost\n": "35,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "8\n",
+    "Damage per Second\n": "390",
+    "Damage per Hit\n": "468",
+    "Hitpoints\n": "2,805",
+    "Health Recovery\n": "500",
+    "Upgrade Cost\n": "40,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "9\n",
+    "Damage per Second\n": "396",
+    "Damage per Hit\n": "475.2",
+    "Hitpoints\n": "2,848",
+    "Health Recovery\n": "500",
+    "Upgrade Cost\n": "45,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "10\n",
+    "Damage per Second\n": "402",
+    "Damage per Hit\n": "482.4",
+    "Hitpoints\n": "2,890",
+    "Health Recovery\n": "600",
+    "Upgrade Cost\n": "50,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "11\n",
+    "Damage per Second\n": "408",
+    "Damage per Hit\n": "489.6",
+    "Hitpoints\n": "2,933",
+    "Health Recovery\n": "600",
+    "Upgrade Cost\n": "53,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "12\n",
+    "Damage per Second\n": "414",
+    "Damage per Hit\n": "496.8",
+    "Hitpoints\n": "2,975",
+    "Health Recovery\n": "600",
+    "Upgrade Cost\n": "56,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "13\n",
+    "Damage per Second\n": "420",
+    "Damage per Hit\n": "504",
+    "Hitpoints\n": "3,018",
+    "Health Recovery\n": "600",
+    "Upgrade Cost\n": "59,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "14\n",
+    "Damage per Second\n": "426",
+    "Damage per Hit\n": "511.2",
+    "Hitpoints\n": "3,060",
+    "Health Recovery\n": "600",
+    "Upgrade Cost\n": "62,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "15\n",
+    "Damage per Second\n": "432",
+    "Damage per Hit\n": "518.4",
+    "Hitpoints\n": "3,103",
+    "Health Recovery\n": "700",
+    "Upgrade Cost\n": "65,000",
+    "Upgrade Time\n": "1d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "16\n",
+    "Damage per Second\n": "438",
+    "Damage per Hit\n": "525.6",
+    "Hitpoints\n": "3,145",
+    "Health Recovery\n": "700",
+    "Upgrade Cost\n": "70,000",
+    "Upgrade Time\n": "1d 12h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "17\n",
+    "Damage per Second\n": "444",
+    "Damage per Hit\n": "532.8",
+    "Hitpoints\n": "3,188",
+    "Health Recovery\n": "700",
+    "Upgrade Cost\n": "75,000",
+    "Upgrade Time\n": "1d 12h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "18\n",
+    "Damage per Second\n": "448",
+    "Damage per Hit\n": "537.6",
+    "Hitpoints\n": "3,230",
+    "Health Recovery\n": "700",
+    "Upgrade Cost\n": "80,000",
+    "Upgrade Time\n": "1d 12h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "19\n",
+    "Damage per Second\n": "452",
+    "Damage per Hit\n": "542.4",
+    "Hitpoints\n": "3,273",
+    "Health Recovery\n": "700",
+    "Upgrade Cost\n": "85,000",
+    "Upgrade Time\n": "1d 12h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "20\n",
+    "Damage per Second\n": "456",
+    "Damage per Hit\n": "547.2",
+    "Hitpoints\n": "3,315",
+    "Health Recovery\n": "800",
+    "Upgrade Cost\n": "90,000",
+    "Upgrade Time\n": "1d 12h",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "21\n",
+    "Damage per Second\n": "460",
+    "Damage per Hit\n": "552",
+    "Hitpoints\n": "3,349",
+    "Health Recovery\n": "800",
+    "Upgrade Cost\n": "95,000",
+    "Upgrade Time\n": "2d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "22\n",
+    "Damage per Second\n": "465",
+    "Damage per Hit\n": "558",
+    "Hitpoints\n": "3,383",
+    "Health Recovery\n": "800",
+    "Upgrade Cost\n": "100,000",
+    "Upgrade Time\n": "2d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "23\n",
+    "Damage per Second\n": "470",
+    "Damage per Hit\n": "564",
+    "Hitpoints\n": "3,417",
+    "Health Recovery\n": "800",
+    "Upgrade Cost\n": "105,000",
+    "Upgrade Time\n": "2d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "24\n",
+    "Damage per Second\n": "474",
+    "Damage per Hit\n": "568.8",
+    "Hitpoints\n": "3,451",
+    "Health Recovery\n": "800",
+    "Upgrade Cost\n": "110,000",
+    "Upgrade Time\n": "2d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "25\n",
+    "Damage per Second\n": "477",
+    "Damage per Hit\n": "572.4",
+    "Hitpoints\n": "3,485",
+    "Health Recovery\n": "900",
+    "Upgrade Cost\n": "115,000",
+    "Upgrade Time\n": "2d",
+    "Hero Hall Level Required\n": "7\n"
+  },
+  {
+    "Level\n": "26\n",
+    "Damage per Second\n": "480",
+    "Damage per Hit\n": "576",
+    "Hitpoints\n": "3,519",
+    "Health Recovery\n": "900",
+    "Upgrade Cost\n": "120,000",
+    "Upgrade Time\n": "3d",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "27\n",
+    "Damage per Second\n": "483",
+    "Damage per Hit\n": "579.6",
+    "Hitpoints\n": "3,553",
+    "Health Recovery\n": "900",
+    "Upgrade Cost\n": "125,000",
+    "Upgrade Time\n": "3d",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "28\n",
+    "Damage per Second\n": "486",
+    "Damage per Hit\n": "583.2",
+    "Hitpoints\n": "3,587",
+    "Health Recovery\n": "900",
+    "Upgrade Cost\n": "130,000",
+    "Upgrade Time\n": "3d",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "29\n",
+    "Damage per Second\n": "489",
+    "Damage per Hit\n": "586.8",
+    "Hitpoints\n": "3,621",
+    "Health Recovery\n": "900",
+    "Upgrade Cost\n": "135,000",
+    "Upgrade Time\n": "3d",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "30\n",
+    "Damage per Second\n": "492",
+    "Damage per Hit\n": "590.4",
+    "Hitpoints\n": "3,655",
+    "Health Recovery\n": "1,000",
+    "Upgrade Cost\n": "140,000",
+    "Upgrade Time\n": "3d",
+    "Hero Hall Level Required\n": "8\n"
+  },
+  {
+    "Level\n": "31\n",
+    "Damage per Second\n": "495",
+    "Damage per Hit\n": "594",
+    "Hitpoints\n": "3,681",
+    "Health Recovery\n": "1,000",
+    "Upgrade Cost\n": "145,000",
+    "Upgrade Time\n": "4d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "32\n",
+    "Damage per Second\n": "498",
+    "Damage per Hit\n": "597.6",
+    "Hitpoints\n": "3,706",
+    "Health Recovery\n": "1,000",
+    "Upgrade Cost\n": "150,000",
+    "Upgrade Time\n": "4d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "33\n",
+    "Damage per Second\n": "502",
+    "Damage per Hit\n": "602.4",
+    "Hitpoints\n": "3,732",
+    "Health Recovery\n": "1,000",
+    "Upgrade Cost\n": "155,000",
+    "Upgrade Time\n": "4d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "34\n",
+    "Damage per Second\n": "506",
+    "Damage per Hit\n": "607.2",
+    "Hitpoints\n": "3,757",
+    "Health Recovery\n": "1,000",
+    "Upgrade Cost\n": "160,000",
+    "Upgrade Time\n": "4d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "35\n",
+    "Damage per Second\n": "510",
+    "Damage per Hit\n": "612",
+    "Hitpoints\n": "3,783",
+    "Health Recovery\n": "1,100",
+    "Upgrade Cost\n": "165,000",
+    "Upgrade Time\n": "4d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "36\n",
+    "Damage per Second\n": "514",
+    "Damage per Hit\n": "616.8",
+    "Hitpoints\n": "3,808",
+    "Health Recovery\n": "1,100",
+    "Upgrade Cost\n": "170,000",
+    "Upgrade Time\n": "5d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "37\n",
+    "Damage per Second\n": "518",
+    "Damage per Hit\n": "621.6",
+    "Hitpoints\n": "3,834",
+    "Health Recovery\n": "1,100",
+    "Upgrade Cost\n": "175,000",
+    "Upgrade Time\n": "5d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "38\n",
+    "Damage per Second\n": "522",
+    "Damage per Hit\n": "626.4",
+    "Hitpoints\n": "3,859",
+    "Health Recovery\n": "1,100",
+    "Upgrade Cost\n": "180,000",
+    "Upgrade Time\n": "5d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "39\n",
+    "Damage per Second\n": "526",
+    "Damage per Hit\n": "631.2",
+    "Hitpoints\n": "3,885",
+    "Health Recovery\n": "1,100",
+    "Upgrade Cost\n": "200,000",
+    "Upgrade Time\n": "5d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "40\n",
+    "Damage per Second\n": "530",
+    "Damage per Hit\n": "636",
+    "Hitpoints\n": "3,910",
+    "Health Recovery\n": "1,200",
+    "Upgrade Cost\n": "220,000",
+    "Upgrade Time\n": "5d",
+    "Hero Hall Level Required\n": "9\n"
+  },
+  {
+    "Level\n": "41\n",
+    "Damage per Second\n": "533",
+    "Damage per Hit\n": "639.6",
+    "Hitpoints\n": "3,936",
+    "Health Recovery\n": "1,200",
+    "Upgrade Cost\n": "240,000",
+    "Upgrade Time\n": "5d",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "42\n",
+    "Damage per Second\n": "536",
+    "Damage per Hit\n": "643.2",
+    "Hitpoints\n": "3,961",
+    "Health Recovery\n": "1,200",
+    "Upgrade Cost\n": "260,000",
+    "Upgrade Time\n": "6d",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "43\n",
+    "Damage per Second\n": "539",
+    "Damage per Hit\n": "646.8",
+    "Hitpoints\n": "3,987",
+    "Health Recovery\n": "1,200",
+    "Upgrade Cost\n": "280,000",
+    "Upgrade Time\n": "6d 12h",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "44\n",
+    "Damage per Second\n": "542",
+    "Damage per Hit\n": "650.4",
+    "Hitpoints\n": "4,012",
+    "Health Recovery\n": "1,200",
+    "Upgrade Cost\n": "300,000",
+    "Upgrade Time\n": "7d",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "45\n",
+    "Damage per Second\n": "545",
+    "Damage per Hit\n": "654",
+    "Hitpoints\n": "4,038",
+    "Health Recovery\n": "1,300",
+    "Upgrade Cost\n": "320,000",
+    "Upgrade Time\n": "7d 12h",
+    "Hero Hall Level Required\n": "10\n"
+  },
+  {
+    "Level\n": "46\n",
+    "Damage per Second\n": "548",
+    "Damage per Hit\n": "657.6",
+    "Hitpoints\n": "4,064",
+    "Health Recovery\n": "1,300",
+    "Upgrade Cost\n": "340,000",
+    "Upgrade Time\n": "8d",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "47\n",
+    "Damage per Second\n": "551",
+    "Damage per Hit\n": "661.2",
+    "Hitpoints\n": "4,090",
+    "Health Recovery\n": "1,300",
+    "Upgrade Cost\n": "350,000",
+    "Upgrade Time\n": "8d",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "48\n",
+    "Damage per Second\n": "554",
+    "Damage per Hit\n": "664.8",
+    "Hitpoints\n": "4,116",
+    "Health Recovery\n": "1,300",
+    "Upgrade Cost\n": "360,000",
+    "Upgrade Time\n": "8d",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "49\n",
+    "Damage per Second\n": "557",
+    "Damage per Hit\n": "668.4",
+    "Hitpoints\n": "4,142",
+    "Health Recovery\n": "1,300",
+    "Upgrade Cost\n": "370,000",
+    "Upgrade Time\n": "8d",
+    "Hero Hall Level Required\n": "11\n"
+  },
+  {
+    "Level\n": "50\n",
+    "Damage per Second\n": "560",
+    "Damage per Hit\n": "672",
+    "Hitpoints\n": "4,168",
+    "Health Recovery\n": "1,400",
+    "Upgrade Cost\n": "380,000",
+    "Upgrade Time\n": "8d",
+    "Hero Hall Level Required\n": "11\n"
+  }
+],
+                },
+
+            }; // { bk: { name: "Barbarian King", data: [...], currentLevel: 0, targetLevel: 0 }, ... }
+
+        // Cleans the raw JSON data
+        function cleanRawJson(rawData) {
+            const dataRows = rawData.slice(1); // Remove header row
+            return dataRows.map(row => {
+                let cleanRow = {};
+                for (const rawKey in keyMap) {
+                    cleanRow[keyMap[rawKey]] = row[rawKey] ? row[rawKey].trim() : "N/A";
+                }
+                return cleanRow;
+            });
+        }
+
+        // --- TIME HELPER FUNCTIONS ---
+        function parseTime(timeStr) {
+            if (!timeStr || timeStr.toLowerCase() === 'n/a') return 0;
+            let totalMinutes = 0;
+            const daysMatch = timeStr.match(/(\d+)\s*d/);
+            const hoursMatch = timeStr.match(/(\d+)\s*h/);
+            const minutesMatch = timeStr.match(/(\d+)\s*m/);
+            if (daysMatch) totalMinutes += parseInt(daysMatch[1]) * 24 * 60;
+            if (hoursMatch) totalMinutes += parseInt(hoursMatch[1]) * 60;
+            if (minutesMatch) totalMinutes += parseInt(minutesMatch[1]);
+            return totalMinutes;
+        }
+
+        function formatTime(totalMinutes) {
+            let roundedMinutes = Math.round(totalMinutes);
+            if (roundedMinutes <= 0) return "N/A";
+            const days = Math.floor(roundedMinutes / (24 * 60));
+            roundedMinutes %= (24 * 60);
+            const hours = Math.floor(roundedMinutes / 60);
+            roundedMinutes %= 60;
+            let parts = [];
+            if (days > 0) parts.push(`${days}d`);
+            if (hours > 0) parts.push(`${hours}h`);
+            if (roundedMinutes > 0 && days === 0) parts.push(`${roundedMinutes}m`);
+            return parts.length > 0 ? parts.join(' ') : "N/A";
+        }
+
+        // --- REACT COMPONENTS ---
+
+        // Buff Controls Component
+        function BuffControls({ buffs, onBuffChange }) {
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-gray-800 rounded-xl shadow-lg">
+                    {/* % Buffs */}
+                    <div className="flex flex-col gap-4">
+                        <label className="flex items-center text-lg">
+                            <input
+                                type="checkbox"
+                                className="h-5 w-5 bg-gray-700 border-gray-600 rounded text-blue-400 focus:ring-blue-500 focus:ring-offset-0"
+                                checked={buffs.hammerJam}
+                                onChange={(e) => onBuffChange('hammerJam', e.target.checked)}
+                            />
+                            <span className="ml-3 font-medium text-white">Hammer Jam (50% Time)</span>
+                        </label>
+                        <label className="flex items-center text-lg">
+                            <span className="mr-3 font-medium text-white">Gold Pass:</span>
+                            <select
+                                className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+                                value={buffs.goldPass}
+                                onChange={(e) => onBuffChange('goldPass', parseFloat(e.target.value))}
+                            >
+                                <option value="0">None (0%)</option>
+                                <option value="0.05">5%</option>
+                                <option value="0.10">10%</option>
+                                <option value="0.15">15%</option>
+                                <option value="0.20">20%</option>
+                            </select>
+                        </label>
+                    </div>
+                    {/* Flat Buffs */}
+                    <div className="flex flex-col gap-4">
+                        <label className="flex items-center text-lg">
+                            <span className="mr-3 font-medium text-white">Builder-Man's Bite:</span>
+                            <input
+                                type="number"
+                                min="0"
+                                className="w-20 p-2 bg-gray-700 border border-gray-600 text-white text-sm rounded-lg"
+                                value={buffs.biteCount}
+                                onChange={(e) => onBuffChange('biteCount', parseInt(e.target.value) || 0)}
+                            />
+                            <span className="ml-2 text-sm text-gray-400">(Saves 30m)</span>
+                        </label>
+                        <label className="flex items-center text-lg">
+                            <span className="mr-3 font-medium text-white">Builder Potion:</span>
+                            <input
+                                type="number"
+                                min="0"
+                                className="w-20 p-2 bg-gray-700 border border-gray-600 text-white text-sm rounded-lg"
+                                value={buffs.potionCount}
+                                onChange={(e) => onBuffChange('potionCount', parseInt(e.target.value) || 0)}
+                            />
+                            <span className="ml-2 text-sm text-gray-400">(Saves 9h)</span>
+                        </label>
+                    </div>
+                </div>
+            );
+        }
+
+        // Hero Tabs Component
+        function HeroTabs({ heroes, activeHeroId, onTabClick }) {
+            return (
+                <div className="flex flex-wrap border-b border-gray-700 mb-6">
+                    {Object.keys(heroes).map(heroId => {
+                        const hero = heroes[heroId];
+                        const isActive = heroId === activeHeroId;
+                        const classes = isActive
+                            ? 'tab-btn active bg-blue-600 text-white'
+                            : 'tab-btn inactive text-gray-400 hover:bg-gray-700 hover:text-white';
+                        return (
+                            <button
+                                key={heroId}
+                                className={`py-3 px-5 md:px-6 font-medium rounded-t-lg transition-colors duration-200 focus:outline-none ${classes}`}
+                                onClick={() => onTabClick(heroId)}
+                            >
+                                {hero.name}
+                            </button>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // Level Selectors Component
+        function LevelSelectors({ hero, onLevelChange, maxLevel }) {
+            const options = Array.from({ length: maxLevel }, (_, i) => i + 1);
+
+            return (
+                <div className="mb-6 flex flex-col md:flex-row justify-center items-center gap-6">
+                    <label className="flex items-center text-lg">
+                        <span className="mr-2 font-medium text-white">Current Level:</span>
+                        <select
+                            className="level-select bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+                            value={hero.currentLevel}
+                            onChange={(e) => onLevelChange(hero.id, 'currentLevel', parseInt(e.target.value))}
+                        >
+                            {options.map(level => (
+                                <option key={level} value={level}>
+                                    Level {level}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label className="flex items-center text-lg">
+                        <span className="mr-2 font-medium text-white">Target Level:</span>
+                        <select
+                            className="level-select bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+                            value={hero.targetLevel}
+                            onChange={(e) => onLevelChange(hero.id, 'targetLevel', parseInt(e.target.value))}
+                        >
+                            {options.map(level => (
+                                <option key={level} value={level}>
+                                    Level {level}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+            );
+        }
+        
+        // Hero Table Component
+        function HeroTable({ hero, processedLevels, onLevelChange }) {
+            const costLabel = hero.name.toLowerCase().includes('warden') ? '(Elixir)' : '(Dark Elixir)';
+            const costColor = hero.name.toLowerCase().includes('warden') ? 'text-pink-400' : 'text-yellow-500';
+
+            return (
+                <div className="bg-gray-800 rounded-xl shadow-lg p-6">
+                    <h2 className="text-3xl font-bold text-white text-center">{hero.name}</h2>
+                    <p className={`text-center text-sm ${costColor} mb-4`}>{costLabel}</p>
+
+                    <LevelSelectors 
+                        hero={hero} 
+                        onLevelChange={onLevelChange} 
+                        maxLevel={hero.data.length + 1} // +1 for N/A level 1
+                    />
+
+                    <div className="table-container overflow-hidden overflow-x-auto rounded-lg border border-gray-700 max-h-[60vh] overflow-y-auto">
+                        <table className="min-w-full divide-y divide-gray-700">
+                            <thead className="bg-gray-700 sticky top-0 z-10">
+                                <tr>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Level</th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Cost</th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Original Time</th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Buffed Time (%'s)</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-gray-800 divide-y divide-gray-700">
+                                {processedLevels.map((level) => (
+                                    <tr 
+                                        key={level.l}
+                                        className={level.isCurrent ? 'current-level' : 'hover:bg-gray-700 transition-colors duration-150'}
+                                    >
+                                        <td className="py-4 px-4 text-sm text-gray-200 whitespace-nowrap">{level.l}</td>
+                                        <td className="py-4 px-4 text-sm text-gray-200 whitespace-nowrap">{level.c}</td>
+                                        <td className="py-4 px-4 text-sm text-gray-200 whitespace-nowrap">{level.t}</td>
+                                        <td className="py-4 px-4 text-sm text-gray-200 whitespace-nowrap">{formatTime(level.buffedMinutes)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        // Summary Item Row
+        function SummaryRow({ label, value, color = 'text-white' }) {
+            return (
+                <div className="flex justify-between items-baseline py-3 border-b border-gray-700">
+                    <span className="text-sm font-medium text-gray-400">{label}</span>
+                    <span className={`text-lg font-semibold ${color}`}>{value}</span>
+                </div>
+            );
+        }
+
+        // Hero Summary Component (Sidebar)
+        function HeroSummary({ heroName, targetLevel, summary }) {
+            return (
+                <div className="bg-gray-800 rounded-xl shadow-lg p-6">
+                    <h3 className="text-2xl font-bold text-white mb-4">Summary for {heroName}</h3>
+                    
+                    <div className="flex flex-col gap-2">
+                        <SummaryRow label={`Pending to Lvl ${targetLevel}`} value={summary.pendingCost.toLocaleString()} />
+                        <SummaryRow label="Original Time" value={formatTime(summary.pendingOriginalMinutes)} />
+                        <SummaryRow label="Time w/ % Buffs" value={formatTime(summary.pendingBuffedMinutes)} />
+                        <SummaryRow label="Potion/Bite Savings" value={`-${formatTime(summary.totalFlatReduction)}`} color="text-cyan-300" />
+                        <SummaryRow label="FINAL PENDING TIME" value={formatTime(summary.finalPendingTime)} color="text-green-300" />
+                    </div>
+
+                    <h4 className="text-xl font-semibold text-white mt-6 mb-3">Total (All Levels)</h4>
+                    <div className="flex flex-col gap-2">
+                        <SummaryRow label="Total Cost" value={summary.totalCost.toLocaleString()} />
+                        <SummaryRow label="Total Original Time" value={formatTime(summary.totalOriginalMinutes)} />
+                    </div>
+                </div>
+            );
+        }
+
+        // Global Summary Component (Sidebar)
+        function GlobalSummary({ summary }) {
+            return (<div></div>
+                // <div className="bg-gray-800 rounded-xl shadow-lg p-6">
+                //     <h2 className="text-2xl font-bold text-white text-center mb-4">Total Savings (All Heroes)</h2>
+                //     <div className="grid grid-cols-1 gap-4 text-center">
+                //         <div>
+                //             <span className="block text-sm text-gray-400 uppercase">Pending Time (% Buffs)</span>
+                //             <span className="block text-2xl font-semibold text-white">{formatTime(summary.globalPendingBuffedMinutes)}</span>
+                //         </div>
+                //         <div>
+                //             <span className="block text-sm text-gray-400 uppercase">Potion/Bite Savings</span>
+                //             <span className="block text-2xl font-semibold text-cyan-300">-{formatTime(summary.globalFlatReduction)}</span>
+                //         </div>
+                //         <div>
+                //             <span className="block text-sm text-gray-400 uppercase">Final Pending Time</span>
+                //             <span className="block text-2xl font-semibold text-green-300">{formatTime(summary.globalFinalTime)}</span>
+                //         </div>
+                //     </div>
+                // </div>
+            );
+        }
+
+        // --- MAIN APP COMPONENT ---
+        function App() {
+            const { useState, useMemo } = React;
+
+            // --- STATE ---
+            // 1. Initialize and clean the hero data
+            const [heroes, setHeroes] = useState(() => {
+                const cleanedData = {};
+                for (const heroId in presetRawData) {
+                    const hero = presetRawData[heroId];
+                    const cleanedLevels = cleanRawJson(hero.data);
+                    const maxLevel = cleanedLevels.length > 0 ? parseInt(cleanedLevels[cleanedLevels.length - 1].l, 10) : 1;
+                    
+                    cleanedData[heroId] = {
+                        id: heroId,
+                        name: hero.name,
+                        data: cleanedLevels,
+                        currentLevel: 1,
+                        targetLevel: maxLevel
+                    };
+                }
+                return cleanedData;
+            });
+
+            // 2. Global buff and navigation state
+            const [activeHeroId, setActiveHeroId] = useState(Object.keys(heroes)[0]);
+            const [buffs, setBuffs] = useState({
+                hammerJam: false,
+                goldPass: 0,
+                biteCount: 0,
+                potionCount: 0
+            });
+
+            // --- HANDLERS ---
+            const handleBuffChange = (buffName, value) => {
+                setBuffs(prevBuffs => ({
+                    ...prevBuffs,
+                    [buffName]: value
+                }));
+            };
+
+            const handleLevelChange = (heroId, levelType, value) => {
+                setHeroes(prevHeroes => ({
+                    ...prevHeroes,
+                    [heroId]: {
+                        ...prevHeroes[heroId],
+                        [levelType]: value
+                    }
+                }));
+            };
+
+            // --- MEMOIZED CALCULATIONS ---
+            // These recalculate automatically when state changes
+            
+            // 1. Calculate processed data for the ACTIVE hero
+            const processedActiveHeroData = useMemo(() => {
+                const hero = heroes[activeHeroId];
+                if (!hero) return { levels: [], summary: {} };
+
+                const { hammerJam, goldPass, biteCount, potionCount } = buffs;
+                const totalFlatReduction = (biteCount * 30) + (potionCount * 9 * 60);
+
+                let totalCost = 0, totalOriginalMinutes = 0, totalBuffedMinutes = 0;
+                let pendingCost = 0, pendingOriginalMinutes = 0, pendingBuffedMinutes = 0;
+
+                const processedLevels = hero.data.map(level => {
+                    const rowLevel = parseInt(level.l, 10);
+                    const cost = parseInt(level.c.replace(/,/g, ''), 10) || 0;
+                    const originalMinutes = parseTime(level.t);
+
+                    let buffedMinutes = originalMinutes;
+                    if (originalMinutes > 0) {
+                        if (hammerJam) buffedMinutes *= 0.5;
+                        if (goldPass > 0) buffedMinutes *= (1 - goldPass);
+                    }
+
+                    // Add to totals
+                    totalCost += cost;
+                    totalOriginalMinutes += originalMinutes;
+                    totalBuffedMinutes += buffedMinutes;
+
+                    // Add to pending
+                    if (rowLevel > hero.currentLevel && rowLevel <= hero.targetLevel) {
+                        pendingCost += cost;
+                        pendingOriginalMinutes += originalMinutes;
+                        pendingBuffedMinutes += buffedMinutes;
+                    }
+
+                    return {
+                        ...level,
+                        originalMinutes,
+                        buffedMinutes,
+                        isCurrent: rowLevel === hero.currentLevel
+                    };
+                });
+
+                const finalPendingTime = Math.max(0, pendingBuffedMinutes - totalFlatReduction);
+
+                return {
+                    levels: processedLevels,
+                    summary: {
+                        totalCost, totalOriginalMinutes, totalBuffedMinutes,
+                        pendingCost, pendingOriginalMinutes, pendingBuffedMinutes,
+                        totalFlatReduction, finalPendingTime
+                    }
+                };
+
+            }, [activeHeroId, heroes, buffs]);
+
+            // 2. Calculate global summary for ALL heroes
+            const globalSummary = useMemo(() => {
+                const { hammerJam, goldPass, biteCount, potionCount } = buffs;
+                const globalFlatReduction = (biteCount * 30) + (potionCount * 9 * 60);
+                let globalPendingBuffedMinutes = 0;
+
+                for (const heroId in heroes) {
+                    const hero = heroes[heroId];
+                    hero.data.forEach(level => {
+                        const rowLevel = parseInt(level.l, 10);
+                        if (rowLevel > hero.currentLevel && rowLevel <= hero.targetLevel) {
+                            const originalMinutes = parseTime(level.t);
+                            let buffedMinutes = originalMinutes;
+                            if (originalMinutes > 0) {
+                                if (hammerJam) buffedMinutes *= 0.5;
+                                if (goldPass > 0) buffedMinutes *= (1 - goldPass);
+                            }
+                            globalPendingBuffedMinutes += buffedMinutes;
+                        }
+                    });
+                }
+
+                const globalFinalTime = Math.max(0, globalPendingBuffedMinutes - globalFlatReduction);
+                return { globalPendingBuffedMinutes, globalFlatReduction, globalFinalTime };
+
+            }, [heroes, buffs]);
+
+
+            // --- RENDER ---
+            const activeHero = heroes[activeHeroId];
+
+            return (
+                <div className="max-w-7xl mx-auto">
+                    <h1 className="text-3xl md:text-4xl font-bold text-white text-center mb-8">
+                        Clash of Clans Hero Upgrades
+                    </h1>
+
+                    <BuffControls buffs={buffs} onBuffChange={handleBuffChange} />
+
+                    <HeroTabs 
+                        heroes={heroes} 
+                        activeHeroId={activeHeroId} 
+                        onTabClick={setActiveHeroId} 
+                    />
+
+                    {/* Main Content Area */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Column: Table */}
+                        <div className="lg:col-span-2">
+                            {activeHero ? (
+                                <HeroTable 
+                                    hero={activeHero} 
+                                    processedLevels={processedActiveHeroData.levels} 
+                                    onLevelChange={handleLevelChange} 
+                                />
+                            ) : (
+                                <p>No hero selected.</p>
+                            )}
+                        </div>
+
+                        {/* Right Column: Summaries */}
+                        <div className="lg:col-span-1 flex flex-col gap-8">
+                            {activeHero ? (
+                                <HeroSummary 
+                                    heroName={activeHero.name}
+                                    targetLevel={activeHero.targetLevel}
+                                    summary={processedActiveHeroData.summary}
+                                />
+                            ) : null}
+                            <GlobalSummary summary={globalSummary} />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Mount the App ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+
+</body>
+</html>
