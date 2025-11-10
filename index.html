@@ -4379,14 +4379,14 @@
                             <span className="mr-3 font-medium text-white">Gold Pass:</span>
                             <select
                                 className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
-                                value={buffs.goldPass}
+                                value={buffs.goldPass.toString()}
                                 onChange={(e) => onBuffChange('goldPass', parseFloat(e.target.value))}
                             >
                                 <option value="0">None (0%)</option>
                                 <option value="0.05">5%</option>
-                                <option value="0.10">10%</option>
+                                <option value="0.1">10%</option>
                                 <option value="0.15">15%</option>
-                                <option value="0.20">20%</option>
+                                <option value="0.2">20%</option>
                             </select>
                         </label>
                     </div>
@@ -4561,24 +4561,24 @@
 
         // Global Summary Component (Sidebar)
         function GlobalSummary({ summary }) {
-            return (<div></div>
-                // <div className="bg-gray-800 rounded-xl shadow-lg p-6">
-                //     <h2 className="text-2xl font-bold text-white text-center mb-4">Total Savings (All Heroes)</h2>
-                //     <div className="grid grid-cols-1 gap-4 text-center">
-                //         <div>
-                //             <span className="block text-sm text-gray-400 uppercase">Pending Time (% Buffs)</span>
-                //             <span className="block text-2xl font-semibold text-white">{formatTime(summary.globalPendingBuffedMinutes)}</span>
-                //         </div>
-                //         <div>
-                //             <span className="block text-sm text-gray-400 uppercase">Potion/Bite Savings</span>
-                //             <span className="block text-2xl font-semibold text-cyan-300">-{formatTime(summary.globalFlatReduction)}</span>
-                //         </div>
-                //         <div>
-                //             <span className="block text-sm text-gray-400 uppercase">Final Pending Time</span>
-                //             <span className="block text-2xl font-semibold text-green-300">{formatTime(summary.globalFinalTime)}</span>
-                //         </div>
-                //     </div>
-                // </div>
+            return (
+                <div className="bg-gray-800 rounded-xl shadow-lg p-6">
+                    <h2 className="text-2xl font-bold text-white text-center mb-4">Total Savings (All Heroes)</h2>
+                    <div className="grid grid-cols-1 gap-4 text-center">
+                        <div>
+                            <span className="block text-sm text-gray-400 uppercase">Pending Time (% Buffs)</span>
+                            <span className="block text-2xl font-semibold text-white">{formatTime(summary.globalPendingBuffedMinutes)}</span>
+                        </div>
+                        <div>
+                            <span className="block text-sm text-gray-400 uppercase">Potion/Bite Savings</span>
+                            <span className="block text-2xl font-semibold text-cyan-300">-{formatTime(summary.globalFlatReduction)}</span>
+                        </div>
+                        <div>
+                            <span className="block text-sm text-gray-400 uppercase">Final Pending Time</span>
+                            <span className="block text-2xl font-semibold text-green-300">{formatTime(summary.globalFinalTime)}</span>
+                        </div>
+                    </div>
+                </div>
             );
         }
 
